@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Dialog from '../Dialog';
 import request from '../../util/request';
@@ -55,6 +55,9 @@ const AddCommVehicle = ({
     const [dialogVisible, setDialogVisible] = useState(false);
     const [currentSelectType, setCurrentSelectType] = useState('');
     const [displayTexts, setDisplayTexts] = useState({});
+    const [settlementVisible, setSettlementVisible] = useState(false); // 结算弹框显示
+    const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
+    const [settleList, setSettleList] = useState([]); // 结算列表
 
     // 获取车辆基础配置
     const getVehicleOption = async () => {
@@ -444,6 +447,128 @@ const AddCommVehicle = ({
         return true;
     };
 
+    // 处理查询按钮点击
+    const handleSearchPress = () => {
+        if (!displayTexts.settleMethod) {
+            toast.show('请选择结算方式');
+            return;
+        }
+        setSearchKeyword('');
+        setSettleList([]);
+        setSettlementVisible(true);
+    };
+
+    // 搜索结算人/公司
+    const handleSearch = async () => {
+        if (!searchKeyword) {
+            toast.show('请输入搜索关键词');
+            return;
+        }
+
+        try {
+            const res = await request.get('/app_driver/vehicle/searchSettle', {
+                key_word: searchKeyword,
+                settle_method: vehicleInfo.settle_method
+            });
+
+            if (res.code === 0) {
+                setSettleList(res.data || []);
+            } else {
+                toast.show(res.msg || '搜索失败');
+            }
+        } catch (error) {
+            toast.show('搜索失败');
+        }
+    };
+
+    // 渲染结算人搜索弹框
+    const renderSettlementModal = () => {
+        // 获取当前选择的结算方式
+        const isPersonalSettle = displayTexts.settleMethod === '按个人结算';
+        
+        return (
+            <Modal
+                visible={settlementVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setSettlementVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.settlementContainer}>
+                        {/* 标题栏 */}
+                        <View style={styles.settlementHeader}>
+                            <Text style={styles.settlementTitle}>
+                                {isPersonalSettle ? '选择结算人' : '选择结算公司'}
+                            </Text>
+                            <TouchableOpacity 
+                                style={styles.closeButton}
+                                onPress={() => setSettlementVisible(false)}
+                            >
+                                <Text style={styles.closeButtonText}>×</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* 搜索框 */}
+                        <View style={styles.searchContainer}>
+                            <View style={styles.searchInputWrapper}>
+                                <MaterialCommunityIcons name="magnify" size={20} color="#999" />
+                                <TextInput
+                                    style={styles.searchInput}
+                                    value={searchKeyword}
+                                    onChangeText={setSearchKeyword}
+                                    placeholder={isPersonalSettle 
+                                        ? '搜索结算人姓名、手机号'
+                                        : '搜索结算公司'
+                                    }
+                                    placeholderTextColor="#999"
+                                />
+                            </View>
+                            <TouchableOpacity 
+                                style={styles.searchBtn}
+                                onPress={handleSearch}
+                            >
+                                <Text style={styles.searchBtnText}>搜索</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* 结算人列表 */}
+                        <ScrollView style={styles.settleList}>
+                            {settleList.map((item, index) => (
+                                <View key={index} style={styles.settleItem}>
+                                    <View style={styles.settleInfo}>
+                                        <View style={styles.settleRow}>
+                                            <Text style={styles.settleLabel}>姓名：</Text>
+                                            <Text style={styles.settleValue}>{item.name}</Text>
+                                        </View>
+                                        <View style={styles.settleRow}>
+                                            <Text style={styles.settleLabel}>手机号：</Text>
+                                            <Text style={styles.settleValue}>{item.mobile}</Text>
+                                        </View>
+                                        <View style={styles.settleRow}>
+                                            <Text style={styles.settleLabel}>银行卡号：</Text>
+                                            <Text style={styles.settleValue}>{item.bank_card_no}</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.settleStatus}>
+                                        <Text style={styles.settleStatusText}>二要素未认证</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </ScrollView>
+
+                        {/* 底部确定按钮 */}
+                        <TouchableOpacity 
+                            style={styles.confirmButton}
+                            onPress={() => setSettlementVisible(false)}
+                        >
+                            <Text style={styles.confirmButtonText}>确定</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        );
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView style={styles.scrollView}>
@@ -540,9 +665,7 @@ const AddCommVehicle = ({
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.searchButton}
-                            onPress={() => {
-                                // 处理查询按钮点击
-                            }}
+                            onPress={handleSearchPress}
                         >
                             <Text style={styles.searchButtonText}>查询</Text>
                         </TouchableOpacity>
@@ -766,6 +889,8 @@ const AddCommVehicle = ({
             >
                 <Text style={styles.submitButtonText}>提交</Text>
             </TouchableOpacity>
+
+            {renderSettlementModal()}
         </View>
     );
 };
@@ -917,6 +1042,121 @@ const styles = StyleSheet.create({
     selectValueContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    settlementContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        marginTop: 50,
+    },
+    settlementHeader: {
+        height: 45,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        position: 'relative',
+    },
+    settlementTitle: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
+    },
+    closeButton: {
+        position: 'absolute',
+        right: 15,
+        top: 10,
+        width: 25,
+        height: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        fontSize: 20,
+        color: '#999',
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    searchInputWrapper: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 4,
+        paddingHorizontal: 10,
+        marginRight: 10,
+    },
+    searchInput: {
+        flex: 1,
+        height: 36,
+        fontSize: 14,
+        color: '#333',
+        paddingLeft: 5,
+    },
+    searchBtn: {
+        backgroundColor: '#1892e5',
+        borderRadius: 4,
+        paddingHorizontal: 15,
+        justifyContent: 'center',
+    },
+    searchBtnText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    settleList: {
+        flex: 1,
+    },
+    settleItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    settleInfo: {
+        flex: 1,
+    },
+    settleRow: {
+        flexDirection: 'row',
+        marginBottom: 5,
+    },
+    settleLabel: {
+        width: 70,
+        fontSize: 14,
+        color: '#999',
+    },
+    settleValue: {
+        fontSize: 14,
+        color: '#333',
+    },
+    settleStatus: {
+        backgroundColor: '#ff4d4f',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 2,
+    },
+    settleStatusText: {
+        color: '#fff',
+        fontSize: 12,
+    },
+    confirmButton: {
+        height: 50,
+        backgroundColor: '#1892e5',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    confirmButtonText: {
+        color: '#fff',
+        fontSize: 16,
     },
 });
 
