@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, SafeAreaView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import request from '../../util/request';
 import toast from '../../util/toast';
@@ -162,8 +162,9 @@ export default function VehicleManagement({ navigation }) {
     }, []);
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <FlatList
+                style={styles.list}
                 data={listData}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
@@ -180,34 +181,42 @@ export default function VehicleManagement({ navigation }) {
                 }}
                 onEndReachedThreshold={0.1}
             />
-            
-            {listData.length < 3 && showAddBtn !== 1 && (
-                <SafeAreaView 
-                    style={styles.addButtonContainer}
-                    edges={['bottom']}
+
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={handleAdd}
                 >
-                    <TouchableOpacity 
-                        style={styles.addButton}
-                        onPress={handleAdd}
-                    >
-                        <MaterialCommunityIcons 
-                            name="plus" 
-                            size={20} 
-                            color="#fff" 
-                            style={styles.addIcon}
-                        />
-                        <Text style={styles.addButtonText}>新增车辆</Text>
-                    </TouchableOpacity>
-                </SafeAreaView>
-            )}
-        </View>
+                    <Text style={styles.addButtonText}>新增车辆</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f6f7',
+        backgroundColor: '#fff',
+    },
+    list: {
+        flex: 1,
+    },
+    buttonContainer: {
+        backgroundColor: '#fff',
+        paddingBottom: Platform.OS === 'ios' ? 0 : 15, // iOS 使用 SafeAreaView，Android 添加底部间距
+    },
+    addButton: {
+        height: 50,
+        backgroundColor: '#1892e5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 15,
+        borderRadius: 4,
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 16,
     },
     vehicleItem: {
         backgroundColor: '#fff',
@@ -284,26 +293,5 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         backgroundColor: '#ef3125',
-    },
-    addButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#1892e5',
-    },
-    addButton: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
-    },
-    addIcon: {
-        marginRight: 5,
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 16,
     },
 }); 

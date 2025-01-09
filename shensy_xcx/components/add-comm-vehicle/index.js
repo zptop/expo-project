@@ -59,6 +59,9 @@ const AddCommVehicle = ({
     const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
     const [settleList, setSettleList] = useState([]); // 结算列表
 
+    // 在组件中定义一个变量来判断是否禁用
+    const isDisabled = vehicleInfo.audit_status === 1;
+
     // 获取车辆基础配置
     const getVehicleOption = async () => {
         try {
@@ -337,7 +340,12 @@ const AddCommVehicle = ({
     const renderSelectItem = (title, type, required = true, extraButton = null) => (
         <TouchableOpacity
             style={styles.selectItem}
-            onPress={() => handleSelectClick(type)}
+            onPress={() => {
+                if (type === 'settleMethod' || !isDisabled) {
+                    handleSelectClick(type);
+                }
+            }}
+            disabled={type !== 'settleMethod' && isDisabled}
         >
             <View style={styles.selectLeft}>
                 {required && <Text style={styles.required}>*</Text>}
@@ -638,10 +646,14 @@ const AddCommVehicle = ({
                     </View>
                     <View style={styles.inputRight}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, isDisabled && styles.readOnlyInput]}
                             value={vehicleInfo.vehicle_number}
-                            onChangeText={text => setVehicleInfo(prev => ({ ...prev, vehicle_number: text }))}
+                            onChangeText={text => setVehicleInfo(prev => ({
+                                ...prev,
+                                vehicle_number: text
+                            }))}
                             placeholder="请输入车牌号"
+                            editable={!isDisabled}
                         />
                         <TouchableOpacity
                             style={styles.matchButton}
@@ -663,11 +675,15 @@ const AddCommVehicle = ({
                         <Text style={styles.inputLabel}>整备质量(KG)</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.vehicle_laden_weight}
-                        onChangeText={text => setVehicleInfo(prev => ({ ...prev, vehicle_laden_weight: text }))}
+                        onChangeText={text => setVehicleInfo(prev => ({
+                            ...prev,
+                            vehicle_laden_weight: text
+                        }))}
                         placeholder="请输入整备质量"
                         keyboardType="numeric"
+                        editable={!isDisabled}
                     />
                 </View>
 
@@ -678,11 +694,15 @@ const AddCommVehicle = ({
                         <Text style={styles.inputLabel}>核定载质量(KG)</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.vehicle_tonnage}
-                        onChangeText={text => setVehicleInfo(prev => ({ ...prev, vehicle_tonnage: text }))}
+                        onChangeText={text => setVehicleInfo(prev => ({
+                            ...prev,
+                            vehicle_tonnage: text
+                        }))}
                         placeholder="请输入核定载质量"
                         keyboardType="numeric"
+                        editable={!isDisabled}
                     />
                 </View>
 
@@ -697,10 +717,14 @@ const AddCommVehicle = ({
                         <Text style={styles.inputLabel}>业户名称</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.carrier_name}
-                        onChangeText={text => setVehicleInfo(prev => ({ ...prev, carrier_name: text }))}
+                        onChangeText={text => setVehicleInfo(prev => ({
+                            ...prev,
+                            carrier_name: text
+                        }))}
                         placeholder="请输入业户名称"
+                        editable={!isDisabled}
                     />
                 </View>
 
@@ -709,6 +733,7 @@ const AddCommVehicle = ({
                 {/* 结算方式 */}
                 <View style={styles.selectItem}>
                     <View style={styles.selectLeft}>
+                        <Text style={styles.required}>*</Text>
                         <Text style={styles.selectTitle}>结算方式</Text>
                     </View>
                     <View style={styles.selectRight}>
@@ -730,15 +755,13 @@ const AddCommVehicle = ({
                     </View>
                 </View>
 
-                {renderSelectItem('业务类型', 'carrierType', false)}
-
                 {/* 结算人信息 */}
                 <View style={styles.inputGroup}>
                     <View style={styles.inputLeft}>
                         <Text style={styles.inputLabel}>结算人姓名</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.name}
                         editable={false}
                         placeholder="请选择结算人"
@@ -750,7 +773,7 @@ const AddCommVehicle = ({
                         <Text style={styles.inputLabel}>结算人手机号</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.mobile}
                         editable={false}
                         placeholder="请选择结算人"
@@ -762,7 +785,7 @@ const AddCommVehicle = ({
                         <Text style={styles.inputLabel}>结算人银行卡号</Text>
                     </View>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, isDisabled && styles.readOnlyInput]}
                         value={vehicleInfo.bank_card_no}
                         editable={false}
                         placeholder="请选择结算人"
@@ -773,13 +796,18 @@ const AddCommVehicle = ({
                     <View style={styles.inputLeft}>
                         <Text style={styles.inputLabel}>结算人开户行</Text>
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        value={vehicleInfo.bank_name}
-                        editable={false}
-                        placeholder="请选择结算人"
-                    />
+                    <View style={styles.inputRight}>
+                        <TextInput
+                            style={[styles.input, isDisabled && styles.readOnlyInput]}
+                            value={vehicleInfo.bank_name}
+                            editable={false}
+                            placeholder="请选择结算人"
+                        />
+                    </View>
                 </View>
+
+                {/* 业务类型 */}
+                {renderSelectItem('业务类型', 'carrierType', false)}
 
                 {/* 道路运输证号 */}
                 <View style={styles.inputGroup}>
@@ -787,12 +815,18 @@ const AddCommVehicle = ({
                         <Text style={styles.required}>*</Text>
                         <Text style={styles.inputLabel}>道路运输证号</Text>
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        value={vehicleInfo.road_trans_cert_number}
-                        onChangeText={text => setVehicleInfo(prev => ({ ...prev, road_trans_cert_number: text }))}
-                        placeholder="请输入道路运输证号"
-                    />
+                    <View style={styles.inputRight}>
+                        <TextInput
+                            style={[styles.input, isDisabled && styles.readOnlyInput]}
+                            value={vehicleInfo.road_trans_cert_number}
+                            onChangeText={text => setVehicleInfo(prev => ({
+                                ...prev,
+                                road_trans_cert_number: text
+                            }))}
+                            placeholder="请输入道路运输证号"
+                            editable={!isDisabled}
+                        />
+                    </View>
                 </View>
 
                 {/* 图片上传部分 */}
@@ -808,7 +842,8 @@ const AddCommVehicle = ({
                             }] : []}
                             onUpload={(file) => handleImageUpload(file, 0)}
                             onDelete={() => handleImageDelete(0)}
-                            showDelete={!!vehicleInfo.vehicle_policy}
+                            showDelete={!isDisabled && !!vehicleInfo.vehicle_policy}
+                            disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
@@ -834,7 +869,8 @@ const AddCommVehicle = ({
                             }] : []}
                             onUpload={(file) => handleImageUpload(file, 1)}
                             onDelete={() => handleImageDelete(1)}
-                            showDelete={!!vehicleInfo.driving_lic_pic}
+                            showDelete={!isDisabled && !!vehicleInfo.driving_lic_pic}
+                            disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
@@ -860,7 +896,8 @@ const AddCommVehicle = ({
                             }] : []}
                             onUpload={(file) => handleImageUpload(file, 2)}
                             onDelete={() => handleImageDelete(2)}
-                            showDelete={!!vehicleInfo.driving_lic_side_pic}
+                            showDelete={!isDisabled && !!vehicleInfo.driving_lic_side_pic}
+                            disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
@@ -886,7 +923,8 @@ const AddCommVehicle = ({
                             }] : []}
                             onUpload={(file) => handleImageUpload(file, 3)}
                             onDelete={() => handleImageDelete(3)}
-                            showDelete={!!vehicleInfo.road_trans_cert_pic}
+                            showDelete={!isDisabled && !!vehicleInfo.road_trans_cert_pic}
+                            disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
@@ -912,7 +950,8 @@ const AddCommVehicle = ({
                             }] : []}
                             onUpload={(file) => handleImageUpload(file, 4)}
                             onDelete={() => handleImageDelete(4)}
-                            showDelete={!!vehicleInfo.man_vehicle_pic}
+                            showDelete={!isDisabled && !!vehicleInfo.man_vehicle_pic}
+                            disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
@@ -1095,7 +1134,8 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
     readOnlyInput: {
-        backgroundColor: '#f0f0f0',
+        // 移除 backgroundColor
+        // backgroundColor: '#f0f0f0',
     },
     selectValueContainer: {
         flexDirection: 'row',

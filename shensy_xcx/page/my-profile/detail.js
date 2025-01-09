@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, SafeAreaView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import request from '../../util/request';
@@ -12,6 +12,9 @@ export default function MyProfileDetail({ route, navigation }) {
     const [images, setImages] = useState([]);
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewIndex, setPreviewIndex] = useState(0);
+    
+    // 从路由参数中获取 real_name_flag
+    const { real_name_flag } = route.params || {};
 
     // 获取用户信息
     const getUserIdentify = async () => {
@@ -172,101 +175,124 @@ export default function MyProfileDetail({ route, navigation }) {
         }
     };
 
+    // 处理重新认证按钮点击
+    const handleReauth = () => {
+        navigation.navigate('MyProfile', { real_name_flag });
+    };
+
     useEffect(() => {
         getUserIdentify();
     }, []);
 
     return (
-        <ScrollView style={styles.container}>
-            {/* 用户基本信息 */}
-            <View style={styles.userInfo}>
-                <TouchableOpacity
-                    style={styles.avatarContainer}
-                    onPress={handleAvatarUpload}
-                >
-                    <Text style={styles.avatarText}>我的头像</Text>
-                    <View style={styles.avatarRight}>
-                        <Image
-                            source={{ uri: userInfo.icon_small_desc }}
-                            style={styles.avatar}
-                        />
-                        <MaterialCommunityIcons
-                            name="chevron-right"
-                            size={20}
-                            color="#999"
-                            style={styles.avatarArrow}
-                        />
-                    </View>
-                </TouchableOpacity>
-                <View style={styles.infoList}>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>姓名</Text>
-                        <Text style={styles.value}>{userInfo.real_name}</Text>
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>手机号</Text>
-                        <Text style={styles.value}>{userInfo.mobile}</Text>
-                        <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>身份证号</Text>
-                        <Text style={styles.value}>{userInfo.id_card_no}</Text>
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>银行卡号</Text>
-                        <Text style={styles.value}>{userInfo.bank_card_no}</Text>
-                        <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>开户行</Text>
-                        <Text style={styles.value}>{userInfo.bank_name}</Text>
-                        <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.label}>推荐人</Text>
-                        <Text style={styles.value}>{userInfo.referral_code || '无'}</Text>
-                    </View>
-                </View>
-            </View>
-
-            {/* 证件照片展示 */}
-            <View style={styles.imageContainer}>
-                <Text style={styles.sectionTitle}>证件照片</Text>
-                <View style={styles.imageGrid}>
-                    {images.map((item, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={[
-                                styles.imageItem,
-                                (index + 1) % 3 === 0 && styles.imageItemLast
-                            ]}
-                            onPress={() => handlePreview(index)}
-                        >
+        <SafeAreaView style={styles.container}>
+            <ScrollView style={styles.scrollView}>
+                {/* 用户基本信息 */}
+                <View style={styles.userInfo}>
+                    <TouchableOpacity
+                        style={styles.avatarContainer}
+                        onPress={handleAvatarUpload}
+                    >
+                        <Text style={styles.avatarText}>我的头像</Text>
+                        <View style={styles.avatarRight}>
                             <Image
-                                source={{ uri: item.src }}
-                                style={styles.image}
+                                source={{ uri: userInfo.icon_small_desc }}
+                                style={styles.avatar}
                             />
-                            <Text style={styles.imageTitle}>{item.title}</Text>
-                        </TouchableOpacity>
-                    ))}
+                            <MaterialCommunityIcons
+                                name="chevron-right"
+                                size={20}
+                                color="#999"
+                                style={styles.avatarArrow}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                    <View style={styles.infoList}>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>姓名</Text>
+                            <Text style={styles.value}>{userInfo.real_name}</Text>
+                        </View>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>手机号</Text>
+                            <Text style={styles.value}>{userInfo.mobile}</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </View>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>身份证号</Text>
+                            <Text style={styles.value}>{userInfo.id_card_no}</Text>
+                        </View>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>银行卡号</Text>
+                            <Text style={styles.value}>{userInfo.bank_card_no}</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </View>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>开户行</Text>
+                            <Text style={styles.value}>{userInfo.bank_name}</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </View>
+                        <View style={styles.infoItem}>
+                            <Text style={styles.label}>推荐人</Text>
+                            <Text style={styles.value}>{userInfo.referral_code || '无'}</Text>
+                        </View>
+                    </View>
                 </View>
-            </View>
 
-            {/* 图片预览 */}
-            <ImagePreview
-                visible={previewVisible}
-                images={images.map(item => item.src)}
-                initialIndex={previewIndex}
-                onClose={() => setPreviewVisible(false)}
-            />
-        </ScrollView>
+                {/* 证件照片展示 */}
+                <View style={styles.imageContainer}>
+                    <Text style={styles.sectionTitle}>证件照片</Text>
+                    <View style={styles.imageGrid}>
+                        {images.map((item, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={[
+                                    styles.imageItem,
+                                    (index + 1) % 3 === 0 && styles.imageItemLast
+                                ]}
+                                onPress={() => handlePreview(index)}
+                            >
+                                <Image
+                                    source={{ uri: item.src }}
+                                    style={styles.image}
+                                />
+                                <Text style={styles.imageTitle}>{item.title}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+
+                {/* 图片预览 */}
+                <ImagePreview
+                    visible={previewVisible}
+                    images={images.map(item => item.src)}
+                    initialIndex={previewIndex}
+                    onClose={() => setPreviewVisible(false)}
+                />
+            </ScrollView>
+
+            {/* 重新认证按钮 */}
+            {userInfo.audit_status == 1 && (
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        style={styles.reauthButton}
+                        onPress={handleReauth}
+                    >
+                        <Text style={styles.reauthButtonText}>重新认证</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff'
+        backgroundColor: '#fff',
+    },
+    buttonContainer: {
+        backgroundColor: '#fff',
+        paddingBottom: Platform.OS === 'ios' ? 0 : 15, // iOS 使用 SafeAreaView，Android 添加底部间距
     },
     userInfo: {
     },
@@ -358,5 +384,17 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 5,
         textAlign: 'center',
+    },
+    reauthButton: {
+        height: 50,
+        backgroundColor: '#1892e5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 15,
+        borderRadius: 4,
+    },
+    reauthButtonText: {
+        color: '#fff',
+        fontSize: 16,
     },
 }); 
