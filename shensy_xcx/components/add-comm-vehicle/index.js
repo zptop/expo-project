@@ -466,9 +466,12 @@ const AddCommVehicle = ({
         }
 
         try {
-            const res = await request.get('/app_driver/vehicle/searchSettle', {
+            // 根据显示文本判断结算方式
+            const settleMethod = displayTexts.settleMethod === '按个人结算' ? '1' : '2';
+            
+            const res = await request.get('/app_driver/vehicle/getSettlerSearch', {
                 key_word: searchKeyword,
-                settle_method: vehicleInfo.settle_method
+                settle_method: settleMethod  // 使用转换后的结算方式值
             });
 
             if (res.code === 0) {
@@ -480,6 +483,59 @@ const AddCommVehicle = ({
             toast.show('搜索失败');
         }
     };
+
+    // 添加选中结算人的处理函数
+    const handleSettleSelect = (selectedItem, index) => {
+        // 创建新的列表，将所有项的 selected 设为 false
+        const newList = settleList.map(item => ({
+            ...item,
+            selected: false
+        }));
+        
+        // 将当前点击项的 selected 设为 true
+        newList[index] = {
+            ...selectedItem,
+            selected: true
+        };
+        
+        // 更新列表状态
+        setSettleList(newList);
+    };
+
+    // 渲染结算人列表项
+    const renderSettleItem = (item, index) => (
+        <TouchableOpacity
+            key={index}
+            style={[
+                styles.settleItem,
+                item.selected && styles.settleItemSelected
+            ]}
+            onPress={() => handleSettleSelect(item, index)}
+        >
+            <View style={styles.settleInfo}>
+                <View style={styles.settleRow}>
+                    <Text style={styles.settleLabel}>姓名：</Text>
+                    <Text style={styles.settleValue}>{item.name}</Text>
+                </View>
+                <View style={styles.settleRow}>
+                    <Text style={styles.settleLabel}>手机号：</Text>
+                    <Text style={styles.settleValue}>{item.mobile}</Text>
+                </View>
+                <View style={styles.settleRow}>
+                    <Text style={styles.settleLabel}>银行卡号：</Text>
+                    <Text style={styles.settleValue}>{item.bank_card_no}</Text>
+                </View>
+            </View>
+            {item.settle_method==1 && <View style={[
+                styles.settleStatus,
+                { backgroundColor: item.three_elements_status === 1 ? '#52c41a' : '#ff4d4f' }
+            ]}>
+                <Text style={styles.settleStatusText}>
+                    {item.three_elements_status === 1 ? '三要素验证通过' : '三要素未验证'}
+                </Text>
+            </View>}
+        </TouchableOpacity>
+    );
 
     // 渲染结算人搜索弹框
     const renderSettlementModal = () => {
@@ -533,33 +589,13 @@ const AddCommVehicle = ({
 
                         {/* 结算人列表 */}
                         <ScrollView style={styles.settleList}>
-                            {settleList.map((item, index) => (
-                                <View key={index} style={styles.settleItem}>
-                                    <View style={styles.settleInfo}>
-                                        <View style={styles.settleRow}>
-                                            <Text style={styles.settleLabel}>姓名：</Text>
-                                            <Text style={styles.settleValue}>{item.name}</Text>
-                                        </View>
-                                        <View style={styles.settleRow}>
-                                            <Text style={styles.settleLabel}>手机号：</Text>
-                                            <Text style={styles.settleValue}>{item.mobile}</Text>
-                                        </View>
-                                        <View style={styles.settleRow}>
-                                            <Text style={styles.settleLabel}>银行卡号：</Text>
-                                            <Text style={styles.settleValue}>{item.bank_card_no}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={styles.settleStatus}>
-                                        <Text style={styles.settleStatusText}>二要素未认证</Text>
-                                    </View>
-                                </View>
-                            ))}
+                            {settleList.map((item, index) => renderSettleItem(item, index))}
                         </ScrollView>
 
                         {/* 底部确定按钮 */}
                         <TouchableOpacity 
                             style={styles.confirmButton}
-                            onPress={() => setSettlementVisible(false)}
+                            onPress={handleConfirm}
                         >
                             <Text style={styles.confirmButtonText}>确定</Text>
                         </TouchableOpacity>
@@ -567,6 +603,28 @@ const AddCommVehicle = ({
                 </View>
             </Modal>
         );
+    };
+
+    // 处理确定按钮点击
+    const handleConfirm = () => {
+        // 找到选中的结算人/公司
+        const selectedItem = settleList.find(item => item.selected);
+        
+        if (selectedItem) {
+            // 更新 vehicleInfo
+            setVehicleInfo(prev => ({
+                ...prev,
+                name: selectedItem.name,
+                mobile: selectedItem.mobile,
+                bank_card_no: selectedItem.bank_card_no,
+                bank_name: selectedItem.bank_name,
+                settle_method: selectedItem.settle_method,
+                settler_id: selectedItem.id
+            }));
+        }
+        
+        // 关闭弹框
+        setSettlementVisible(false);
     };
 
     return (
@@ -1122,6 +1180,9 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
+    settleItemSelected: {
+        backgroundColor: '#ECF4FB',
+    },
     settleInfo: {
         flex: 1,
     },
@@ -1143,6 +1204,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 2,
+    },
+    settleStatusSuccess: {
+        backgroundColor: '#52c41a',
     },
     settleStatusText: {
         color: '#fff',
