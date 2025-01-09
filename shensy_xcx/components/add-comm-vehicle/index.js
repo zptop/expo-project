@@ -154,7 +154,7 @@ const AddCommVehicle = ({
         try {
             // 先获取车辆信息
             const res = await request.get('/app_driver/vehicle/getVehicleInfo', {
-                user_vehicleid
+                user_vehicleid  // 编辑模式只传 user_vehicleid
             });
 
             if (res.code === 0 && res.data) {
@@ -215,6 +215,64 @@ const AddCommVehicle = ({
                 } else {
                     toast.show('获取配置失败');
                 }
+            } else {
+                toast.show(res.msg || '获取车辆信息失败');
+            }
+        } catch (error) {
+            toast.show('获取车辆信息失败');
+        }
+    };
+
+    // 添加匹配车辆信息方法
+    const matchVehicleInfo = async () => {
+        if (!vehicleInfo.vehicle_number) {
+            toast.show('请输入车牌号');
+            return;
+        }
+
+        try {
+            const res = await request.get('/app_driver/vehicle/getVehicleInfo', {
+                vehicle_number: vehicleInfo.vehicle_number  // 匹配时只传 vehicle_number
+            });
+
+            if (res.code === 0 && res.data) {
+                const data = res.data;
+                
+                // 处理图片数据和其他字段
+                const processedData = {
+                    ...data,
+                    vehicle_policy: data.VehiclePolicyDesc?.[0]?.obs_url_text || '',
+                    driving_lic_pic: data.DrivingLicPicDesc?.[0]?.obs_url_text || '',
+                    driving_lic_side_pic: data.DrivingLicSidePicDesc?.[0]?.obs_url_text || '',
+                    road_trans_cert_pic: data.RoadTransCertPicDesc?.[0]?.obs_url_text || '',
+                    man_vehicle_pic: data.ManVehiclePicDesc?.[0]?.obs_url_text || '',
+                    vehicle_type: data.vehicle_type,
+                    vehicle_length_type: data.vehicle_length_type,
+                    lic_plate_code: data.lic_plate_code,
+                    vehicle_class_code: data.vehicle_class_code,
+                    vehicle_plate_color: data.vehicle_plate_color,
+                    vehicle_brands: data.vehicle_brands,
+                    settle_method: data.settle_method,
+                    carrier_type: data.carrier_type,
+                    vehicle_laden_weight: data.vehicle_laden_weight?.toString() || '',
+                    vehicle_tonnage: data.vehicle_tonnage?.toString() || '',
+                };
+
+                // 更新车辆信息
+                setVehicleInfo(processedData);
+
+                // 更新显示文本
+                const newDisplayTexts = {
+                    vehicleType: vehicleOptions.vehicleType[data.vehicle_type],
+                    vehicleLengthType: vehicleOptions.vehicleLengthType[data.vehicle_length_type],
+                    licPlateCode: vehicleOptions.licPlateCode[data.lic_plate_code],
+                    vehicleClassCode: vehicleOptions.vehicleClassCode[data.vehicle_class_code],
+                    vehiclePlateColor: vehicleOptions.vehiclePlateColor[data.vehicle_plate_color],
+                    vehicleBrands: vehicleOptions.vehicleBrands[data.vehicle_brands],
+                    settleMethod: vehicleOptions.settleMethod[data.settle_method],
+                    carrierType: vehicleOptions.carrierType[data.carrier_type],
+                };
+                setDisplayTexts(newDisplayTexts);
             } else {
                 toast.show(res.msg || '获取车辆信息失败');
             }
@@ -404,7 +462,7 @@ const AddCommVehicle = ({
                         />
                         <TouchableOpacity
                             style={styles.matchButton}
-                            onPress={getVehicleInfo}
+                            onPress={matchVehicleInfo}
                         >
                             <Text style={styles.matchButtonText}>匹配</Text>
                         </TouchableOpacity>
