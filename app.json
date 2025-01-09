@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "shensy_xcx",
+    "slug": "shensy_xcx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.your.package",
+      "config": {
+        "usesNonExemptEncryption": false,
+        "amap": {
+          "apiKey": "your_ios_key"
+        }
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "需要获取您的位置信息以显示地图",
+        "NSLocationAlwaysUsageDescription": "需要获取您的位置信息以显示地图"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.your.package",
+      "config": {
+        "amap": {
+          "apiKey": "your_android_key"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
