@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import globalData from './globalData';
-var CryptoJS = require("crypto-js")
+let CryptoJS = require("crypto-js")
 
 // post参数签名
 const signPost = (url, jsonData) => {

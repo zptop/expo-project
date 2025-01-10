@@ -212,11 +212,14 @@ export default function MyProfileDetail({ route, navigation }) {
                             <Text style={styles.label}>姓名</Text>
                             <Text style={styles.value}>{userInfo.real_name}</Text>
                         </View>
-                        <View style={styles.infoItem}>
+                        <TouchableOpacity
+                            style={styles.infoItem}
+                            onPress={() => navigation.navigate('ModifyMobile')}
+                        >
                             <Text style={styles.label}>手机号</Text>
                             <Text style={styles.value}>{userInfo.mobile}</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                        </View>
+                        </TouchableOpacity>
                         <View style={styles.infoItem}>
                             <Text style={styles.label}>身份证号</Text>
                             <Text style={styles.value}>{userInfo.id_card_no}</Text>

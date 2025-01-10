@@ -25,6 +25,7 @@ import MyProfileDetail from '../page/my-profile/detail';
 import VehicleManagement from '../page/vehicle-management/index';
 import Settings from '../page/settings/index';
 import VehicleAdd from '../page/vehicle-add/index';
+import ModifyMobile from '../page/setting/modify-mobile/index';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -221,6 +222,20 @@ const routes = [
       headerBackTitleVisible: false,
       headerLeftLabelVisible: false,
     })
+  },
+  {
+    name: 'ModifyMobile',
+    component: ModifyMobile,
+    options: {
+      title: '修改手机号',
+      headerStyle: {
+        backgroundColor: '#fff',
+      },
+      headerTintColor: '#333',
+      headerTitleStyle: {
+        fontWeight: 'normal',
+      },
+    }
   }
 ];
 
