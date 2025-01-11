@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform,SafeAreaView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import globalData from '../../util/globalData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -101,10 +101,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f6f7',
   },
   menuGroup: {
-    marginTop: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginHorizontal: 10,
+    flex: 1,
   },
   menuItem: {
     flexDirection: 'row',
@@ -132,19 +129,23 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   logoutContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1892e5',
+    backgroundColor: '#fff',
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E5E5',
   },
   logoutButton: {
-    width: '100%',
+    height: 44,
+    backgroundColor: '#1890FF',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 15,
+    borderRadius: 4,
   },
   logoutText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '500',
   },
 }); 

@@ -27,6 +27,7 @@ import Settings from '../page/settings/index';
 import VehicleAdd from '../page/vehicle-add/index';
 import ModifyMobile from '../page/setting/modify-mobile/index';
 import ModifyBank from '../page/my-profile/modify-bank';
+import Copyright from '../page/settings/Copyright';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -207,6 +208,17 @@ const routes = [
     component: Settings,
     options: {
       title: '设置',
+      headerShown: true,
+      headerBackTitle: '',
+      headerBackTitleVisible: false,
+      headerLeftLabelVisible: false,
+    }
+  },
+  {
+    name: 'Copyright',
+    component: Copyright,
+    options: {
+      title: '版权所有',
       headerShown: true,
       headerBackTitle: '',
       headerBackTitleVisible: false,
