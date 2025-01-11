@@ -102,6 +102,10 @@ const styles = StyleSheet.create({
   },
   menuGroup: {
     flex: 1,
+    backgroundColor: '#fff',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee'
   },
   menuItem: {
     flexDirection: 'row',
@@ -111,6 +115,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eee',
+    backgroundColor: '#fff',
   },
   lastMenuItem: {
     borderBottomWidth: 0,
