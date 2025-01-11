@@ -224,16 +224,22 @@ export default function MyProfileDetail({ route, navigation }) {
                             <Text style={styles.label}>身份证号</Text>
                             <Text style={styles.value}>{userInfo.id_card_no}</Text>
                         </View>
-                        <View style={styles.infoItem}>
+                        <TouchableOpacity
+                            style={styles.infoItem}
+                            onPress={() => navigation.navigate('ModifyBank')}
+                        >
                             <Text style={styles.label}>银行卡号</Text>
                             <Text style={styles.value}>{userInfo.bank_card_no}</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                        </View>
-                        <View style={styles.infoItem}>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.infoItem}
+                            onPress={() => navigation.navigate('ModifyBank')}
+                        >
                             <Text style={styles.label}>开户行</Text>
                             <Text style={styles.value}>{userInfo.bank_name}</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-                        </View>
+                        </TouchableOpacity>
                         <View style={styles.infoItem}>
                             <Text style={styles.label}>推荐人</Text>
                             <Text style={styles.value}>{userInfo.referral_code || '无'}</Text>

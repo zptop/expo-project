@@ -26,6 +26,7 @@ import VehicleManagement from '../page/vehicle-management/index';
 import Settings from '../page/settings/index';
 import VehicleAdd from '../page/vehicle-add/index';
 import ModifyMobile from '../page/setting/modify-mobile/index';
+import ModifyBank from '../page/my-profile/modify-bank';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -228,6 +229,20 @@ const routes = [
     component: ModifyMobile,
     options: {
       title: '修改手机号',
+      headerStyle: {
+        backgroundColor: '#fff',
+      },
+      headerTintColor: '#333',
+      headerTitleStyle: {
+        fontWeight: 'normal',
+      },
+    }
+  },
+  {
+    name: 'ModifyBank',
+    component: ModifyBank,
+    options: {
+      title: '银行卡号',
       headerStyle: {
         backgroundColor: '#fff',
       },
