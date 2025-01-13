@@ -280,7 +280,7 @@ export default function MyProfileDetail({ route, navigation }) {
             </ScrollView>
 
             {/* 重新认证按钮 */}
-            {userInfo.audit_status == 1 && (
+            {userInfo.audit_status !== 1 && (
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={styles.reauthButton}
