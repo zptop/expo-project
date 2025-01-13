@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { Steps } from '../../components/Steps';
 import ImagePicker from '../../components/ImagePicker';
+import Dialog from '../../components/Dialog';
+import AddCommVehicle from '../../components/add-comm-vehicle';
 import request from '../../util/request';
 import toast from '../../util/toast';
-import Dialog from '../../components/Dialog';
 
 // 图片字段映射
 const mapData = new Map([
@@ -27,8 +28,10 @@ const mapData = new Map([
 ]);
 
 export default function MyProfile({ route, navigation }) {
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(1);
   const [uploading, setUploading] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [referralList, setReferralList] = useState([]);
   const [formData, setFormData] = useState({
     real_name: '',
     id_card_no: '',
@@ -44,13 +47,9 @@ export default function MyProfile({ route, navigation }) {
   });
 
   const steps = [
-    { text: '人' },
-    { text: '车' }
+    { text: '人', completed: activeStep >= 1 },
+    { text: '车', completed: activeStep >= 1 }
   ];
-
-  // 添加推荐人相关状态
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [referralList, setReferralList] = useState([]); // 推荐人列表
 
   // 获取用户认证信息
   const getUserIdentify = async () => {
@@ -184,267 +183,290 @@ export default function MyProfile({ route, navigation }) {
     }
   }, [route.params]);
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {route.params?.real_name_flag !== 3 && <View style={styles.stepsContainer}>
-          <Steps steps={steps} activeStep={activeStep} />
-        </View>}
+  // 处理车辆信息提交
+  const handleVehicleSubmit = async (vehicleData) => {
+    try {
+      const res = await request.post('/app_driver/vehicle/addVehicle', vehicleData);
+      if (res.code === 0) {
+        toast.show('提交成功');
+        navigation.goBack();
+      } else {
+        toast.show(res.msg);
+      }
+    } catch (error) {
+      toast.show('提交失败');
+    }
+  };
 
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.form}>
-            {/* 姓名 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.inputLabel}>姓名</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="请输入直系姓名，和身份证上一致"
-                value={formData.real_name}
-                onChangeText={v => setFormData(prev => ({ ...prev, real_name: v }))}
+  // 渲染内容
+  const renderContent = () => {
+    if (activeStep === 0) {
+      return (
+        <View style={styles.form}>
+          {/* 姓名 */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.inputLabel}>姓名</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="请输入姓名"
+              value={formData.real_name}
+              onChangeText={v => setFormData(prev => ({ ...prev, real_name: v }))}
+            />
+          </View>
+
+          {/* 身份证号 */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.inputLabel}>身份证号</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="请输入身份证号"
+              value={formData.id_card_no}
+              onChangeText={v => setFormData(prev => ({ ...prev, id_card_no: v }))}
+            />
+          </View>
+
+          {/* 银行卡号 */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.inputLabel}>银行卡号</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="请输入银行卡号"
+              value={formData.bank_card_no}
+              onChangeText={v => setFormData(prev => ({ ...prev, bank_card_no: v }))}
+            />
+          </View>
+
+          {/* 开户银行 */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.inputLabel}>开户银行</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="请输入开户银行"
+              value={formData.bank_name}
+              onChangeText={v => setFormData(prev => ({ ...prev, bank_name: v }))}
+            />
+          </View>
+
+          {/* 头像 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人肩部以上五官清晰头像照</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.icon_small ? [{
+                  url: formData.icon_small_full || formData.icon_small
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 0)}
+                onDelete={() => handleImageDelete(0)}
+                showDelete={!!formData.icon_small}
               />
-            </View>
-
-            {/* 身份证号 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.inputLabel}>身份证号</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="请输入身份证号"
-                value={formData.id_card_no}
-                onChangeText={v => setFormData(prev => ({ ...prev, id_card_no: v }))}
-              />
-            </View>
-
-            {/* 银行卡号 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.inputLabel}>银行卡号</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="请输入银行卡号"
-                value={formData.bank_card_no}
-                onChangeText={v => setFormData(prev => ({ ...prev, bank_card_no: v }))}
-              />
-            </View>
-
-            {/* 开户银行 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.inputLabel}>开户银行</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="请输入开户银行"
-                value={formData.bank_name}
-                onChangeText={v => setFormData(prev => ({ ...prev, bank_name: v }))}
-              />
-            </View>
-
-            {/* 推荐人 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputLeft}>
-                <Text style={styles.inputLabel}>推荐人</Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.selectBox}
-                onPress={() => setDialogVisible(true)}
-              >
-                <Text style={styles.selectText}>
-                  {referralList.find(item => item.referral_employee_id === formData.referral_employee_id)?.referral_code || '请选择推荐人'}
-                </Text>
-                <Text style={styles.selectArrow}>›</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* 图片上传部分 */}
-            {/* 头像照 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人肩部以上五官清晰头像照</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.icon_small ? [{
-                    url: formData.icon_small_full || formData.icon_small
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 0)}
-                  onDelete={() => handleImageDelete(0)}
-                  showDelete={!!formData.icon_small}
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-1.png')}
+                  style={styles.exampleImage}
                 />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-1.png')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 身份证头像照 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人身份证头像照</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.id_pic1 ? [{
-                    url: formData.id_pic1_full || formData.id_pic1
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 1)}
-                  onDelete={() => handleImageDelete(1)}
-                  showDelete={!!formData.id_pic1}
-                />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-2.png')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 身份证国徽照 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人身份证国徽照</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.id_pic2 ? [{
-                    url: formData.id_pic2_full || formData.id_pic2
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 2)}
-                  onDelete={() => handleImageDelete(2)}
-                  showDelete={!!formData.id_pic2}
-                />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-3.png')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 驾驶证正页 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人驾驶证正页</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.driver_lic_pic ? [{
-                    url: formData.driver_lic_pic_full || formData.driver_lic_pic
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 3)}
-                  onDelete={() => handleImageDelete(3)}
-                  showDelete={!!formData.driver_lic_pic}
-                />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-4.png')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 驾驶证副页 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人驾驶证副页</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.driver_lic_side_pic ? [{
-                    url: formData.driver_lic_side_pic_full || formData.driver_lic_side_pic
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 4)}
-                  onDelete={() => handleImageDelete(4)}
-                  showDelete={!!formData.driver_lic_side_pic}
-                />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-4.png')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 从业资格证 */}
-            <View style={styles.uploadGroup}>
-              <View style={styles.uploadLeft}>
-                <Text style={styles.required}>*</Text>
-                <Text style={styles.uploadTitle}>请上传您本人从业资格证</Text>
-              </View>
-              <View style={styles.uploadContent}>
-                <ImagePicker
-                  files={formData.qual_cert_pic ? [{
-                    url: formData.qual_cert_pic_full || formData.qual_cert_pic
-                  }] : []}
-                  onUpload={(file) => handleImageUpload(file, 5)}
-                  onDelete={() => handleImageDelete(5)}
-                  showDelete={!!formData.qual_cert_pic}
-                />
-                <View style={styles.exampleContainer}>
-                  <Image
-                    source={require('../../assets/shensy_driver_xcx_images/f-5.jpg')}
-                    style={styles.exampleImage}
-                  />
-                  <View style={styles.exampleLabel}>
-                    <Text style={styles.exampleText}>示例</Text>
-                  </View>
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
                 </View>
               </View>
             </View>
           </View>
+
+          {/* 身份证头像照 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人身份证头像照</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.id_pic1 ? [{
+                  url: formData.id_pic1_full || formData.id_pic1
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 1)}
+                onDelete={() => handleImageDelete(1)}
+                showDelete={!!formData.id_pic1}
+              />
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-2.png')}
+                  style={styles.exampleImage}
+                />
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 身份证国徽照 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人身份证国徽照</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.id_pic2 ? [{
+                  url: formData.id_pic2_full || formData.id_pic2
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 2)}
+                onDelete={() => handleImageDelete(2)}
+                showDelete={!!formData.id_pic2}
+              />
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-3.png')}
+                  style={styles.exampleImage}
+                />
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 驾驶证正页 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人驾驶证正页</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.driver_lic_pic ? [{
+                  url: formData.driver_lic_pic_full || formData.driver_lic_pic
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 3)}
+                onDelete={() => handleImageDelete(3)}
+                showDelete={!!formData.driver_lic_pic}
+              />
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-4.png')}
+                  style={styles.exampleImage}
+                />
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 驾驶证副页 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人驾驶证副页</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.driver_lic_side_pic ? [{
+                  url: formData.driver_lic_side_pic_full || formData.driver_lic_side_pic
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 4)}
+                onDelete={() => handleImageDelete(4)}
+                showDelete={!!formData.driver_lic_side_pic}
+              />
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-4.png')}
+                  style={styles.exampleImage}
+                />
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 从业资格证 */}
+          <View style={styles.uploadGroup}>
+            <View style={styles.uploadLeft}>
+              <Text style={styles.required}>*</Text>
+              <Text style={styles.uploadTitle}>请上传您本人从业资格证</Text>
+            </View>
+            <View style={styles.uploadContent}>
+              <ImagePicker
+                files={formData.qual_cert_pic ? [{
+                  url: formData.qual_cert_pic_full || formData.qual_cert_pic
+                }] : []}
+                onUpload={(file) => handleImageUpload(file, 5)}
+                onDelete={() => handleImageDelete(5)}
+                showDelete={!!formData.qual_cert_pic}
+              />
+              <View style={styles.exampleContainer}>
+                <Image
+                  source={require('../../assets/shensy_driver_xcx_images/f-5.jpg')}
+                  style={styles.exampleImage}
+                />
+                <View style={styles.exampleLabel}>
+                  <Text style={styles.exampleText}>示例</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    } else {
+      return (
+        <AddCommVehicle
+          flag="addvehicle"
+          onSubmit={handleVehicleSubmit}
+        />
+      );
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Steps 固定在顶部 */}
+        {route.params?.real_name_flag !== 3 && (
+          <View style={styles.stepsContainer}>
+            <Steps steps={steps} activeStep={activeStep} />
+          </View>
+        )}
+
+        {/* 内容区域 */}
+        <ScrollView style={styles.scrollView}>
+          {renderContent()}
         </ScrollView>
 
-        <View style={styles.bottomBtnContainer}>
-          <TouchableOpacity 
-            style={[styles.submitBtn, uploading && styles.submitBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitBtnText}>下一步</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        {/* 底部按钮只在个人信息步骤显示 */}
+        {activeStep === 0 && (
+          <View style={styles.bottomBtnContainer}>
+            <TouchableOpacity 
+              style={[styles.submitBtn, uploading && styles.submitBtnDisabled]}
+              onPress={handleSubmit}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitBtnText}>
+                  {route.params?.real_name_flag !== 3 ? '下一步' : '提交'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
-        {/* 添加推荐人选择弹框 */}
+        {/* 推荐人选择弹框 */}
         <Dialog
           visible={dialogVisible}
           title="选择推荐人"

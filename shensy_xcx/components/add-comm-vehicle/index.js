@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image, Modal, SafeAreaView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Dialog from '../Dialog';
 import request from '../../util/request';
@@ -975,17 +975,21 @@ const AddCommVehicle = ({
                 />
             </ScrollView>
 
-            {/* 提交按钮 */}
-            <TouchableOpacity
-                style={styles.submitButton}
-                onPress={() => {
-                    if (validateForm()) {
-                        onSubmit(vehicleInfo);
-                    }
-                }}
-            >
-                <Text style={styles.submitButtonText}>提交</Text>
-            </TouchableOpacity>
+            {/* 底部固定按钮 */}
+            <SafeAreaView style={styles.bottomSafeArea}>
+                <View style={styles.bottomBtnContainer}>
+                    <TouchableOpacity
+                        style={styles.submitBtn}
+                        onPress={() => {
+                            if (validateForm()) {
+                                onSubmit(vehicleInfo);
+                            }
+                        }}
+                    >
+                        <Text style={styles.submitBtnText}>提交</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
 
             {renderSettlementModal()}
         </View>
@@ -995,10 +999,10 @@ const AddCommVehicle = ({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#fff'
     },
     scrollView: {
-        flex: 1,
+        flex: 1
     },
     inputGroup: {
         flexDirection: 'row',
@@ -1262,6 +1266,28 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
     },
+    bottomSafeArea: {
+        backgroundColor: '#fff'
+    },
+    bottomBtnContainer: {
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: '#eee',
+        backgroundColor: '#fff'
+    },
+    submitBtn: {
+        backgroundColor: '#1890ff',
+        height: 44,
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    submitBtnText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '500'
+    }
 });
 
 export default AddCommVehicle;
