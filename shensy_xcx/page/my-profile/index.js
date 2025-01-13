@@ -44,8 +44,8 @@ export default function MyProfile({ route, navigation }) {
   });
 
   const steps = [
-    { text: '个人信息' },
-    { text: '车辆信息' }
+    { text: '人' },
+    { text: '车' }
   ];
 
   // 添加推荐人相关状态
@@ -138,7 +138,6 @@ export default function MyProfile({ route, navigation }) {
         navigation.navigate('AuthError', { errMsg: res.msg });
       }
     } catch (error) {
-      console.error('提交失败:', error);
       toast.show('提交失败');
     }
   };
@@ -153,7 +152,6 @@ export default function MyProfile({ route, navigation }) {
         toast.show(res.msg);
       }
     } catch (error) {
-      console.error('获取推荐人列表失败:', error);
       toast.show('获取推荐人列表失败');
     }
   };
@@ -189,9 +187,9 @@ export default function MyProfile({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.stepsContainer}>
+        {route.params?.real_name_flag !== 3 && <View style={styles.stepsContainer}>
           <Steps steps={steps} activeStep={activeStep} />
-        </View>
+        </View>}
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.form}>
