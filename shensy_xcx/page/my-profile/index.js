@@ -147,9 +147,11 @@ export default function MyProfile({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <ScrollView style={styles.scrollView}>
+        <View style={styles.stepsContainer}>
           <Steps steps={steps} activeStep={activeStep} />
-          
+        </View>
+
+        <ScrollView style={styles.scrollView}>
           <View style={styles.form}>
             {/* 姓名 */}
             <View style={styles.inputGroup}>
@@ -388,7 +390,6 @@ export default function MyProfile({ route, navigation }) {
           </View>
         </ScrollView>
 
-        {/* 底部按钮 */}
         <View style={styles.bottomBtnContainer}>
           <TouchableOpacity 
             style={[styles.submitBtn, uploading && styles.submitBtnDisabled]}
@@ -414,6 +415,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1
+  },
+  stepsContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,
