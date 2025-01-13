@@ -14,6 +14,7 @@ import { Steps } from '../../components/Steps';
 import ImagePicker from '../../components/ImagePicker';
 import request from '../../util/request';
 import toast from '../../util/toast';
+import Dialog from '../../components/Dialog';
 
 // 图片字段映射
 const mapData = new Map([
@@ -46,6 +47,10 @@ export default function MyProfile({ route, navigation }) {
     { text: '个人信息' },
     { text: '车辆信息' }
   ];
+
+  // 添加推荐人相关状态
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [referralList, setReferralList] = useState([]); // 推荐人列表
 
   // 获取用户认证信息
   const getUserIdentify = async () => {
@@ -138,6 +143,43 @@ export default function MyProfile({ route, navigation }) {
     }
   };
 
+  // 获取推荐人列表
+  const getUserReferral = async () => {
+    try {
+      const res = await request.get('/app_driver/user/getUserReferral');
+      if (res.code === 0) {
+        setReferralList(res.data || []);
+      } else {
+        toast.show(res.msg);
+      }
+    } catch (error) {
+      console.error('获取推荐人列表失败:', error);
+      toast.show('获取推荐人列表失败');
+    }
+  };
+
+  // 处理推荐人选择
+  const handleReferralSelect = (label, value) => {
+    setFormData(prev => ({
+      ...prev,
+      referral_employee_id: value
+    }));
+    setDialogVisible(false);
+  };
+
+  // 在组件加载时获取推荐人列表
+  useEffect(() => {
+    getUserReferral();
+  }, []);
+
+  // 将推荐人列表转换为 Dialog 需要的格式
+  const getReferralOptions = () => {
+    return referralList.map(item => ({
+      label: item.referral_code,  // 显示的文本
+      value: item.referral_employee_id  // 实际的值
+    }));
+  };
+
   useEffect(() => {
     if (route.params?.real_name_flag === 3) {
       getUserIdentify();
@@ -216,10 +258,10 @@ export default function MyProfile({ route, navigation }) {
               </View>
               <TouchableOpacity 
                 style={styles.selectBox}
-                onPress={() => {/* 处理推荐人选择 */}}
+                onPress={() => setDialogVisible(true)}
               >
                 <Text style={styles.selectText}>
-                  {formData.referral_employee_id ? '已选择' : '请选择推荐人'}
+                  {referralList.find(item => item.referral_employee_id === formData.referral_employee_id)?.referral_code || '请选择推荐人'}
                 </Text>
                 <Text style={styles.selectArrow}>›</Text>
               </TouchableOpacity>
@@ -403,6 +445,15 @@ export default function MyProfile({ route, navigation }) {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* 添加推荐人选择弹框 */}
+        <Dialog
+          visible={dialogVisible}
+          title="选择推荐人"
+          data={getReferralOptions()}
+          onCancel={() => setDialogVisible(false)}
+          onConfirm={handleReferralSelect}
+        />
       </View>
     </SafeAreaView>
   );
@@ -440,7 +491,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eee'
   },
