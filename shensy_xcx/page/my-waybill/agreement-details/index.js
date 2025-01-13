@@ -218,8 +218,8 @@ export default function AgreementDetails({ route, navigation }) {
                             `是否拨打电话 ${waybillInfo.employee_phone}？`,
                             [
                                 { text: '取消', style: 'cancel' },
-                                { 
-                                    text: '确定', 
+                                {
+                                    text: '确定',
                                     onPress: () => {
                                         Linking.openURL(`tel:${waybillInfo.employee_phone}`).catch(err => {
                                             console.error('拨打电话失败:', err);
@@ -566,19 +566,29 @@ export default function AgreementDetails({ route, navigation }) {
                             </View>
                         </View>
                         {/* 异地卸货点/费用 */}
-                        <View style={styles.section}>
+                        <TouchableOpacity
+                            style={styles.section}
+                            onPress={() => navigation.navigate('RemoteUnload', {
+                                waybill_id,
+                                waybill_no
+                            })}
+                        >
                             <Text style={styles.label}>异地卸货点/费用</Text>
                             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-                                {/* 卸货点数量 */}
                                 <Text style={styles.value}>
                                     {waybillInfo.nonlocal_unload_count}
                                 </Text>
-                                {/* 卸货点费用 */}
                                 <Text style={styles.value}>
                                     {waybillInfo.nonlocal_unload_amount}
                                 </Text>
                             </View>
-                        </View>
+                            <MaterialIcons
+                                name="chevron-right"
+                                size={24}
+                                color="#999"
+                                style={styles.arrowIcon}
+                            />
+                        </TouchableOpacity>
                         {/* 总份数 */}
                         <View style={styles.section}>
                             <Text style={styles.label}>总份数</Text>

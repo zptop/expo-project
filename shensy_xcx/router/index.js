@@ -28,6 +28,7 @@ import VehicleAdd from '../page/vehicle-add/index';
 import ModifyMobile from '../page/setting/modify-mobile/index';
 import ModifyBank from '../page/my-profile/modify-bank';
 import Copyright from '../page/settings/Copyright';
+import RemoteUnload from '../page/my-waybill/remote-unload';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -262,6 +263,13 @@ const routes = [
       headerTitleStyle: {
         fontWeight: 'normal',
       },
+    }
+  },
+  {
+    name: 'RemoteUnload',
+    component: RemoteUnload,
+    options: {
+      title: '异地卸货点'
     }
   }
 ];
