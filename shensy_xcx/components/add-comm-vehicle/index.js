@@ -11,8 +11,14 @@ const mapVehicleData = new Map([
     [0, 'vehicle_policy'],
     [1, 'driving_lic_pic'],
     [2, 'driving_lic_side_pic'],
-    [3, 'road_trans_cert_pic'],
-    [4, 'man_vehicle_pic']
+    [3, 'vechile_operation_pic'],
+    [4, 'vechile_operation_side_pic'],
+    [5, 'road_trans_cert_pic'],
+    [6, 'trailer_driving_lic_pic'],
+    [7, 'trailer_driving_lic_side_pic'],
+    [8, 'trailer_operation_pic'],
+    [9, 'trailer_operation_side_pic'],
+    [10, 'man_vehicle_pic']
 ]);
 
 const mapSelectData = new Map([
@@ -45,10 +51,20 @@ const AddCommVehicle = ({
         settle_method: '',       // 结算方式
         carrier_type: '',       // 业务类型
         vehicle_policy: '',     // 车头商业保险单
-        driving_lic_pic: '',    // 行驶证正页
-        driving_lic_side_pic: '', // 行驶证副页
+        driving_lic_pic: '',    // 注册车辆（牵引车）行驶证正页
+        driving_lic_side_pic: '', // 注册车辆（牵引车）行驶证年审页
+        vehicle_annual_inspect_exp: '', // 注册车辆（牵引车）年检过期日期
+        vechile_operation_pic: '', // 注册车辆（牵引车）营运证正页
+        vechile_operation_side_pic: '', // 注册车辆（牵引车）营运证副页
+        vehicle_annual_audit_exp: '', // 注册车辆（牵引车）年审过期日期
         road_trans_cert_pic: '', // 道路运输证
         road_trans_cert_number: '', // 道路运输证号
+        trailer_driving_lic_pic: '',		//挂车行驶证正页
+        trailer_driving_lic_side_pic: '',	//挂车行驶证年审页
+        trailer_annual_inspect_exp: '', // 挂车年检过期日期
+        trailer_operation_pic: '', //挂车营运证正页
+        trailer_operation_side_pic: '',//挂车营运证年审页
+        trailer_annual_audit_exp:'',  //挂车营运证年审过期日期	
         man_vehicle_pic: '',    // 人车合照
     });
     const [vehicleOptions, setVehicleOptions] = useState({});
@@ -165,7 +181,7 @@ const AddCommVehicle = ({
 
             if (res.code === 0 && res.data) {
                 const data = res.data;
-                
+
                 // 获取选项配置
                 const optionsRes = await request.get('/app_driver/vehicle/getVehicleOption', {
                     option_type: 'all'
@@ -243,7 +259,7 @@ const AddCommVehicle = ({
 
             if (res.code === 0 && res.data) {
                 const data = res.data;
-                
+
                 // 处理图片数据和其他字段
                 const processedData = {
                     ...data,
@@ -437,15 +453,39 @@ const AddCommVehicle = ({
             return false;
         }
         if (!vehicleInfo.driving_lic_pic) {
-            toast.show('请上传行驶证正页');
+            toast.show('请上传注册车辆（牵引车）行驶证正页');
             return false;
         }
         if (!vehicleInfo.driving_lic_side_pic) {
-            toast.show('请上传行驶证副页');
+            toast.show('请上传注册车辆（牵引车）行驶证年审页');
             return false;
         }
+        if (!vehicleInfo.vechile_operation_pic) {
+            toast.show('请上传注册车辆（牵引车）营运证正页');
+            return false;
+        }
+        if (!vehicleInfo.vechile_operation_side_pic) {
+            toast.show('请上传注册车辆（牵引车）营运证年审页');
+            return false;
+        }   
         if (!vehicleInfo.road_trans_cert_pic) {
             toast.show('请上传道路运输证');
+            return false;
+        }
+        if (!vehicleInfo.trailer_driving_lic_pic) {
+            toast.show('请上传挂车行驶证正页');
+            return false;
+        }
+        if (!vehicleInfo.trailer_driving_lic_side_pic) {
+            toast.show('请上传挂车行驶证年审页');
+            return false;
+        }
+        if (!vehicleInfo.trailer_operation_pic) {
+            toast.show('请上传挂车营运证正页');
+            return false;
+        }
+        if (!vehicleInfo.trailer_operation_side_pic) {
+            toast.show('请上传挂车营运证年审页');
             return false;
         }
         if (!vehicleInfo.man_vehicle_pic) {
@@ -476,7 +516,7 @@ const AddCommVehicle = ({
         try {
             // 根据显示文本判断结算方式
             const settleMethod = displayTexts.settleMethod === '按个人结算' ? '1' : '2';
-            
+
             const res = await request.get('/app_driver/vehicle/getSettlerSearch', {
                 key_word: searchKeyword,
                 settle_method: settleMethod  // 使用转换后的结算方式值
@@ -499,13 +539,13 @@ const AddCommVehicle = ({
             ...item,
             selected: false
         }));
-        
+
         // 将当前点击项的 selected 设为 true
         newList[index] = {
             ...selectedItem,
             selected: true
         };
-        
+
         // 更新列表状态
         setSettleList(newList);
     };
@@ -534,7 +574,7 @@ const AddCommVehicle = ({
                     <Text style={styles.settleValue}>{item.bank_card_no}</Text>
                 </View>
             </View>
-            {item.settle_method==1 && <View style={[
+            {item.settle_method == 1 && <View style={[
                 styles.settleStatus,
                 { backgroundColor: item.three_elements_status === 1 ? '#52c41a' : '#ff4d4f' }
             ]}>
@@ -549,7 +589,7 @@ const AddCommVehicle = ({
     const renderSettlementModal = () => {
         // 获取当前选择的结算方式
         const isPersonalSettle = displayTexts.settleMethod === '按个人结算';
-        
+
         return (
             <Modal
                 visible={settlementVisible}
@@ -564,7 +604,7 @@ const AddCommVehicle = ({
                             <Text style={styles.settlementTitle}>
                                 {isPersonalSettle ? '选择结算人' : '选择结算公司'}
                             </Text>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.closeButton}
                                 onPress={() => setSettlementVisible(false)}
                             >
@@ -580,14 +620,14 @@ const AddCommVehicle = ({
                                     style={styles.searchInput}
                                     value={searchKeyword}
                                     onChangeText={setSearchKeyword}
-                                    placeholder={isPersonalSettle 
+                                    placeholder={isPersonalSettle
                                         ? '搜索结算人姓名、手机号'
                                         : '搜索结算公司'
                                     }
                                     placeholderTextColor="#999"
                                 />
                             </View>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.searchBtn}
                                 onPress={handleSearch}
                             >
@@ -601,7 +641,7 @@ const AddCommVehicle = ({
                         </ScrollView>
 
                         {/* 底部确定按钮 */}
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.confirmButton}
                             onPress={handleConfirm}
                         >
@@ -617,7 +657,7 @@ const AddCommVehicle = ({
     const handleConfirm = () => {
         // 找到选中的结算人/公司
         const selectedItem = settleList.find(item => item.selected);
-        
+
         if (selectedItem) {
             // 更新 vehicleInfo
             setVehicleInfo(prev => ({
@@ -630,7 +670,7 @@ const AddCommVehicle = ({
                 settler_id: selectedItem.id
             }));
         }
-        
+
         // 关闭弹框
         setSettlementVisible(false);
     };
@@ -807,7 +847,7 @@ const AddCommVehicle = ({
                 </View>
 
                 {/* 业务类型 */}
-                {renderSelectItem('业务类型', 'carrierType', false)}
+                {/* {renderSelectItem('业务类型', 'carrierType', false)} */}
 
                 {/* 道路运输证号 */}
                 <View style={styles.inputGroup}>
@@ -860,7 +900,7 @@ const AddCommVehicle = ({
                 <View style={styles.uploadGroup}>
                     <View style={styles.uploadLeft}>
                         <Text style={styles.required}>*</Text>
-                        <Text style={styles.uploadTitle}>行驶证正页</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（牵引车）行驶证正页</Text>
                     </View>
                     <View style={styles.uploadContent}>
                         <ImagePicker
@@ -887,7 +927,7 @@ const AddCommVehicle = ({
                 <View style={styles.uploadGroup}>
                     <View style={styles.uploadLeft}>
                         <Text style={styles.required}>*</Text>
-                        <Text style={styles.uploadTitle}>行驶证副页</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（牵引车）行驶证年审页</Text>
                     </View>
                     <View style={styles.uploadContent}>
                         <ImagePicker
@@ -909,6 +949,60 @@ const AddCommVehicle = ({
                             </View>
                         </View>
                     </View>
+                </View>  
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（牵引车）营运证正页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.vechile_operation_pic ? [{
+                                url: vehicleInfo.vechile_operation_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 3)}
+                            onDelete={() => handleImageDelete(3)}
+                            showDelete={!isDisabled && !!vehicleInfo.vechile_operation_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/vehicle-f-3-1.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（牵引车）营运证年审页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.vechile_operation_side_pic ? [{
+                                url: vehicleInfo.vechile_operation_side_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 4)}
+                            onDelete={() => handleImageDelete(4)}
+                            showDelete={!isDisabled && !!vehicleInfo.vechile_operation_side_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/vehicle-f-3-2.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
                 </View>
 
                 <View style={styles.uploadGroup}>
@@ -921,14 +1015,122 @@ const AddCommVehicle = ({
                             files={vehicleInfo.road_trans_cert_pic ? [{
                                 url: vehicleInfo.road_trans_cert_pic
                             }] : []}
-                            onUpload={(file) => handleImageUpload(file, 3)}
-                            onDelete={() => handleImageDelete(3)}
+                            onUpload={(file) => handleImageUpload(file, 5)}
+                            onDelete={() => handleImageDelete(5)}
                             showDelete={!isDisabled && !!vehicleInfo.road_trans_cert_pic}
                             disabled={isDisabled}
                         />
                         <View style={styles.exampleContainer}>
                             <Image
                                 source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/vehicle-f-3.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（挂车）行驶证正页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.trailer_driving_lic_pic ? [{
+                                url: vehicleInfo.trailer_driving_lic_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 6)}
+                            onDelete={() => handleImageDelete(6)}
+                            showDelete={!isDisabled && !!vehicleInfo.trailer_driving_lic_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/trailer-lic-1.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（挂车）行驶证年审页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.trailer_driving_lic_side_pic ? [{
+                                url: vehicleInfo.trailer_driving_lic_side_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 7)}
+                            onDelete={() => handleImageDelete(7)}
+                            showDelete={!isDisabled && !!vehicleInfo.trailer_driving_lic_side_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/trailer-lic-2.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（挂车）营运证正页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.trailer_operation_pic ? [{
+                                url: vehicleInfo.trailer_operation_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 8)}
+                            onDelete={() => handleImageDelete(8)}
+                            showDelete={!isDisabled && !!vehicleInfo.trailer_operation_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/trailer-f-1.png' }}
+                                style={styles.exampleImage}
+                            />
+                            <View style={styles.exampleLabel}>
+                                <Text style={styles.exampleText}>示例</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.uploadGroup}>
+                    <View style={styles.uploadLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.uploadTitle}>注册车辆（挂车）营运证年审页</Text>
+                    </View>
+                    <View style={styles.uploadContent}>
+                        <ImagePicker
+                            files={vehicleInfo.trailer_operation_side_pic ? [{
+                                url: vehicleInfo.trailer_operation_side_pic
+                            }] : []}
+                            onUpload={(file) => handleImageUpload(file, 9)}
+                            onDelete={() => handleImageDelete(9)}
+                            showDelete={!isDisabled && !!vehicleInfo.trailer_operation_side_pic}
+                            disabled={isDisabled}
+                        />
+                        <View style={styles.exampleContainer}>
+                            <Image
+                                source={{ uri: 'https://test-shensy.ship56.net/shensy_driver_xcx_images/trailer-f-2.png' }}
                                 style={styles.exampleImage}
                             />
                             <View style={styles.exampleLabel}>
@@ -948,8 +1150,8 @@ const AddCommVehicle = ({
                             files={vehicleInfo.man_vehicle_pic ? [{
                                 url: vehicleInfo.man_vehicle_pic
                             }] : []}
-                            onUpload={(file) => handleImageUpload(file, 4)}
-                            onDelete={() => handleImageDelete(4)}
+                            onUpload={(file) => handleImageUpload(file, 10)}
+                            onDelete={() => handleImageDelete(10)}
                             showDelete={!isDisabled && !!vehicleInfo.man_vehicle_pic}
                             disabled={isDisabled}
                         />
