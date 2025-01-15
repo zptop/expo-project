@@ -79,6 +79,20 @@ const AddCommVehicle = ({
     // 在组件中定义一个变量来判断是否禁用
     const isDisabled = vehicleInfo.audit_status === 1;
 
+    // 初始化时设置默认值
+    useEffect(() => {
+        if (!user_vehicleid) {  // 只在新增时设置默认值
+            setVehicleInfo(prev => ({
+                ...prev,
+                vehicle_plate_color: '2',  // 2 代表黄色
+            }));
+            setDisplayTexts(prev => ({
+                ...prev,
+                vehiclePlateColor: '黄色'
+            }));
+        }
+    }, []);
+
     // 获取车辆基础配置
     const getVehicleOption = async () => {
         try {
@@ -167,6 +181,18 @@ const AddCommVehicle = ({
             }
             const optionsData = res.code === 0 && res.data ? res.data : mockData;
             setVehicleOptions(optionsData);
+
+            // 如果是新增模式，设置默认值
+            if (!user_vehicleid) {
+                setVehicleInfo(prev => ({
+                    ...prev,
+                    vehicle_plate_color: '2',  // 2 代表黄色
+                }));
+                setDisplayTexts(prev => ({
+                    ...prev,
+                    vehiclePlateColor: optionsData.vehiclePlateColor['2']  // 使用配置中的文本
+                }));
+            }
         } catch (error) {
             toast.show('获取配置失败');
         }
@@ -453,10 +479,6 @@ const AddCommVehicle = ({
             toast.show('请选择车长');
             return false;
         }
-        if (!vehicleInfo.vehicle_laden_weight) {
-            toast.show('请输入整备质量');
-            return false;
-        }
         if (!vehicleInfo.vehicle_tonnage) {
             toast.show('请输入核定载质量');
             return false;
@@ -467,10 +489,6 @@ const AddCommVehicle = ({
         }
         if (!vehicleInfo.vehicle_class_code) {
             toast.show('请选择车辆分类');
-            return false;
-        }
-        if (!vehicleInfo.vehicle_plate_color) {
-            toast.show('请选择车辆颜色');
             return false;
         }
         if (!vehicleInfo.carrier_name) {
@@ -748,7 +766,6 @@ const AddCommVehicle = ({
                 {/* 整备质量 */}
                 <View style={styles.inputGroup}>
                     <View style={styles.inputLeft}>
-                        <Text style={styles.required}>*</Text>
                         <Text style={styles.inputLabel}>整备质量(KG)</Text>
                     </View>
                     <TextInput
@@ -783,9 +800,9 @@ const AddCommVehicle = ({
                     />
                 </View>
 
-                {renderSelectItem('牌照类型', 'licPlateCode')}
-                {renderSelectItem('车辆分类', 'vehicleClassCode')}
-                {renderSelectItem('车辆颜色', 'vehiclePlateColor')}
+                {renderSelectItem('牌照类型', 'licPlateCode', true)}
+                {renderSelectItem('车辆分类', 'vehicleClassCode', true)}
+                {renderSelectItem('车辆颜色', 'vehiclePlateColor', false)}
 
                 {/* 业户名称 */}
                 <View style={styles.inputGroup}>
