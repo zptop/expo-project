@@ -5,6 +5,7 @@ import Dialog from '../Dialog';
 import request from '../../util/request';
 import toast from '../../util/toast';
 import ImagePicker from '../ImagePicker';
+import DatePicker from '../DatePicker';
 
 // 定义字段映射
 const mapVehicleData = new Map([
@@ -64,7 +65,7 @@ const AddCommVehicle = ({
         trailer_annual_inspect_exp: '', // 挂车年检过期日期
         trailer_operation_pic: '', //挂车营运证正页
         trailer_operation_side_pic: '',//挂车营运证年审页
-        trailer_annual_audit_exp:'',  //挂车营运证年审过期日期	
+        trailer_annual_audit_exp: '',  //挂车营运证年审过期日期	
         man_vehicle_pic: '',    // 人车合照
     });
     const [vehicleOptions, setVehicleOptions] = useState({});
@@ -170,6 +171,42 @@ const AddCommVehicle = ({
             toast.show('获取配置失败');
         }
     };
+
+    // 添加时间选择器的显示状态
+    const [openTimeModal, setOpenTimeModal] = useState({
+        compulsory_insurance_exp: false,
+        vehicle_annual_inspect_exp: false,
+        vehicle_annual_audit_exp: false,
+        trailer_annual_inspect_exp: false,
+        trailer_annual_audit_exp: false
+    });
+
+    // 处理时间选择
+    const handleTimeChange = (date, field) => {
+        setVehicleInfo(prev => ({
+            ...prev,
+            [field]: date.toISOString()
+                .replace('T', ' ')
+                .replace('Z', '')
+                .split('.')[0]
+        }));
+        setOpenTimeModal(prev => ({
+            ...prev,
+            [field]: false
+        }));
+    };
+
+    // 渲染日期选择器
+    const renderDatePicker = (field, title) => (
+        <DatePicker
+            isVisible={openTimeModal[field]}
+            date={vehicleInfo[field] ? new Date(vehicleInfo[field]) : new Date()}
+            onConfirm={(date) => handleTimeChange(date, field)}
+            onCancel={() => setOpenTimeModal(prev => ({ ...prev, [field]: false }))}
+            mode="date"
+            title={title}
+        />
+    );
 
     // 获取车辆信息（编辑模式）
     const getVehicleInfo = async () => {
@@ -467,7 +504,7 @@ const AddCommVehicle = ({
         if (!vehicleInfo.vechile_operation_side_pic) {
             toast.show('请上传注册车辆（牵引车）营运证年审页');
             return false;
-        }   
+        }
         if (!vehicleInfo.road_trans_cert_pic) {
             toast.show('请上传道路运输证');
             return false;
@@ -897,6 +934,27 @@ const AddCommVehicle = ({
                     </View>
                 </View>
 
+                {/* 交强险过期时间 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.inputLabel}>交强险过期时间</Text>
+                    </View>
+                    <View style={styles.inputRight}>
+                        <TouchableOpacity
+                            style={styles.datePickerButton}
+                            onPress={() => setOpenTimeModal(prev => ({ ...prev, compulsory_insurance_exp: true }))}
+                            disabled={isDisabled}
+                        >
+                            <Text style={[styles.datePickerText, isDisabled && styles.readOnlyInput]}>
+                                {vehicleInfo.compulsory_insurance_exp || "请选择日期"}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </TouchableOpacity>
+                    </View>
+                    {renderDatePicker('compulsory_insurance_exp', '交强险过期时间')}
+                </View>
+
                 <View style={styles.uploadGroup}>
                     <View style={styles.uploadLeft}>
                         <Text style={styles.required}>*</Text>
@@ -949,7 +1007,28 @@ const AddCommVehicle = ({
                             </View>
                         </View>
                     </View>
-                </View>  
+                </View>
+
+                {/* （牵引车）车辆年检过期日期 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.inputLabel}>（牵引车）车辆年检过期日期</Text>
+                    </View>
+                    <View style={styles.inputRight}>
+                        <TouchableOpacity
+                            style={styles.datePickerButton}
+                            onPress={() => setOpenTimeModal(prev => ({ ...prev, vehicle_annual_inspect_exp: true }))}
+                            disabled={isDisabled}
+                        >
+                            <Text style={[styles.datePickerText, isDisabled && styles.readOnlyInput]}>
+                                {vehicleInfo.vehicle_annual_inspect_exp || "请选择日期"}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </TouchableOpacity>
+                    </View>
+                    {renderDatePicker('vehicle_annual_inspect_exp', '（牵引车）车辆年检过期日期')}
+                </View>
 
                 <View style={styles.uploadGroup}>
                     <View style={styles.uploadLeft}>
@@ -1003,6 +1082,27 @@ const AddCommVehicle = ({
                             </View>
                         </View>
                     </View>
+                </View>
+
+                {/* （牵引车）营运证年审过期日期 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.inputLabel}>（牵引车）营运证年审过期日期</Text>
+                    </View>
+                    <View style={styles.inputRight}>
+                        <TouchableOpacity
+                            style={styles.datePickerButton}
+                            onPress={() => setOpenTimeModal(prev => ({ ...prev, vehicle_annual_audit_exp: true }))}
+                            disabled={isDisabled}
+                        >
+                            <Text style={[styles.datePickerText, isDisabled && styles.readOnlyInput]}>
+                                {vehicleInfo.vehicle_annual_audit_exp || "请选择日期"}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </TouchableOpacity>
+                    </View>
+                    {renderDatePicker('vehicle_annual_audit_exp', '（牵引车）营运证年审过期日期 ')}
                 </View>
 
                 <View style={styles.uploadGroup}>
@@ -1086,6 +1186,27 @@ const AddCommVehicle = ({
                     </View>
                 </View>
 
+                {/* （挂车）车辆年检过期日期 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.inputLabel}>（挂车）车辆年检过期日期</Text>
+                    </View>
+                    <View style={styles.inputRight}>
+                        <TouchableOpacity
+                            style={styles.datePickerButton}
+                            onPress={() => setOpenTimeModal(prev => ({ ...prev, trailer_annual_inspect_exp: true }))}
+                            disabled={isDisabled}
+                        >
+                            <Text style={[styles.datePickerText, isDisabled && styles.readOnlyInput]}>
+                                {vehicleInfo.trailer_annual_inspect_exp || "请选择日期"}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </TouchableOpacity>
+                    </View>
+                    {renderDatePicker('trailer_annual_inspect_exp', '（挂车）车辆年检过期日期')}
+                </View>
+
                 <View style={styles.uploadGroup}>
                     <View style={styles.uploadLeft}>
                         <Text style={styles.required}>*</Text>
@@ -1138,6 +1259,27 @@ const AddCommVehicle = ({
                             </View>
                         </View>
                     </View>
+                </View>
+
+                {/* （挂车）营运证年审过期日期 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputLeft}>
+                        <Text style={styles.required}>*</Text>
+                        <Text style={styles.inputLabel}>（挂车）营运证年审过期日期</Text>
+                    </View>
+                    <View style={styles.inputRight}>
+                        <TouchableOpacity
+                            style={styles.datePickerButton}
+                            onPress={() => setOpenTimeModal(prev => ({ ...prev, trailer_annual_audit_exp: true }))}
+                            disabled={isDisabled}
+                        >
+                            <Text style={[styles.datePickerText, isDisabled && styles.readOnlyInput]}>
+                                {vehicleInfo.trailer_annual_audit_exp || "请选择日期"}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+                        </TouchableOpacity>
+                    </View>
+                    {renderDatePicker('trailer_annual_audit_exp', '（挂车）营运证年审过期日期 ')}
                 </View>
 
                 <View style={styles.uploadGroup}>
@@ -1230,6 +1372,12 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-end'
+    },
+    datePickerButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 4,
     },
     input: {
         flex: 1,
