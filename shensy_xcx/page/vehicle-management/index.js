@@ -152,6 +152,7 @@ export default function VehicleManagement({ navigation }) {
                     >
                         <MaterialCommunityIcons name="delete" size={20} color="#fff" />
                     </TouchableOpacity>
+                    <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
                 </View>
             </TouchableOpacity>
         </View>
@@ -220,11 +221,13 @@ const styles = StyleSheet.create({
     },
     vehicleItem: {
         backgroundColor: '#fff',
-        marginBottom: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#eee',
     },
     vehicleContent: {
         flexDirection: 'row',
         padding: 15,
+        alignItems: 'center',
     },
     vehicleLeft: {
         flex: 1,
@@ -279,6 +282,7 @@ const styles = StyleSheet.create({
     vehicleRight: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingLeft: 10,
     },
     iconButton: {
         width: 30,

@@ -29,6 +29,7 @@ import ModifyMobile from '../page/setting/modify-mobile/index';
 import ModifyBank from '../page/my-profile/modify-bank';
 import Copyright from '../page/settings/Copyright';
 import RemoteUnload from '../page/my-waybill/remote-unload';
+import VehicleDetail from '../page/vehicle-detail';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -270,6 +271,14 @@ const routes = [
     component: RemoteUnload,
     options: {
       title: '异地卸货点'
+    }
+  },
+  {
+    name: 'VehicleDetail',
+    component: VehicleDetail,
+    options: {
+      title: '车辆详情',
+      headerBackTitle: ' ',
     }
   }
 ];
