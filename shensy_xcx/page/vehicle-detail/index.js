@@ -9,7 +9,6 @@ const VehicleDetail = ({ route }) => {
     const [vehicleInfo, setVehicleInfo] = useState(null);
     const [vehicleOptions, setVehicleOptions] = useState({});
     const [displayTexts, setDisplayTexts] = useState({});
-    // 添加预览状态
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
 
@@ -22,7 +21,6 @@ const VehicleDetail = ({ route }) => {
 
             if (res.code === 0) {
                 setVehicleInfo(res.data);
-                getVehicleOption();
             } else {
                 toast.show(res.msg || '获取车辆信息失败');
             }
@@ -32,7 +30,7 @@ const VehicleDetail = ({ route }) => {
     };
 
     // 获取车辆配置选项
-    const getVehicleOption = async () => {
+    const getVehicleOption = async (info) => {
         try {
             const res = await request.get('/app_driver/vehicle/getVehicleOption', {
                 option_type: 'all'
@@ -46,15 +44,14 @@ const VehicleDetail = ({ route }) => {
                 };
                 setVehicleOptions(data);
 
-                // 设置显示文本
                 const texts = {
-                    vehicleType: data.vehicleType[vehicleInfo.vehicle_type],
-                    vehicleLengthType: data.vehicleLengthType[vehicleInfo.vehicle_length_type],
-                    licPlateCode: data.licPlateCode[vehicleInfo.lic_plate_code],
-                    vehicleClassCode: data.vehicleClassCode[vehicleInfo.vehicle_class_code],
-                    vehiclePlateColor: data.vehiclePlateColor[vehicleInfo.vehicle_plate_color],
-                    vehicleBrands: data.vehicleBrands[vehicleInfo.vehicle_brands],
-                    settleMethod: data.settleMethod[vehicleInfo.settle_method]
+                    vehicleType: data.vehicleType[info.vehicle_type],
+                    vehicleLengthType: data.vehicleLengthType[info.vehicle_length_type],
+                    licPlateCode: data.licPlateCode[info.lic_plate_code],
+                    vehicleClassCode: data.vehicleClassCode[info.vehicle_class_code],
+                    vehiclePlateColor: data.vehiclePlateColor[info.vehicle_plate_color],
+                    vehicleBrands: data.vehicleBrands[info.vehicle_brands],
+                    settleMethod: data.settleMethod[info.settle_method]
                 };
                 setDisplayTexts(texts);
             }
@@ -64,22 +61,23 @@ const VehicleDetail = ({ route }) => {
     };
 
     useEffect(() => {
+        if (vehicleInfo) {
+            getVehicleOption(vehicleInfo);
+        }
+    }, [vehicleInfo]);
+
+    useEffect(() => {
         getVehicleInfo();
     }, []);
 
-    // 处理图片点击
     const handleImagePress = (imageUrl) => {
-        console.log('Preview Image URL:', imageUrl); // 添加日志
         setPreviewImage(imageUrl);
         setPreviewVisible(true);
     };
 
-    // 修改图片渲染部分
     const renderImage = (imageDesc, label) => {
         if (!imageDesc?.[0]?.obs_url_text) return null;
         const imageUrl = imageDesc[0].obs_url_text;
-        
-        console.log('Image URL:', imageUrl); // 添加日志
         
         return (
             <View style={styles.imageItem}>
