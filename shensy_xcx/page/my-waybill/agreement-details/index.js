@@ -25,6 +25,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 export default function AgreementDetails({ route, navigation }) {
     const { waybill_id, waybill_no, from_flag } = route.params;
     const [waybillInfo, setWaybillInfo] = useState(null);
+    const [unloadPlaces, setUnloadPlaces] = useState([]);
     const [activeStep, setActiveStep] = useState(0);
     const [safeChecked, setSafeChecked] = useState(false);
     const [lightningPayChecked, setLightningPayChecked] = useState(false);
@@ -97,13 +98,20 @@ export default function AgreementDetails({ route, navigation }) {
                 page: 1,
                 pageSize: 100
             });
+            
             if (res.code === 0) {
                 setUnloadPlaces(res.data.list || []);
             } else {
-                toast.show(res.msg || '获取异地卸货点失败');
+                // 只在真正的错误时显示提示
+                if (res.code !== 0) {
+                    toast.show(res.msg || '获取异地卸货点失败');
+                }
             }
         } catch (error) {
-            toast.show('获取异地卸货点失败');
+            // 只在网络错误等情况下显示提示
+            if (error.message !== 'Network Error') {
+                toast.show('获取异地卸货点失败');
+            }
         }
     };
 
@@ -191,7 +199,10 @@ export default function AgreementDetails({ route, navigation }) {
             checkLocationPermission();
         }
         getWaybillInfo();
-        getUnloadPlaces();
+        // 只在需要时获取异地卸货点
+        if (waybill_id && waybill_no) {
+            getUnloadPlaces();
+        }
     }, []);
 
     useEffect(() => {
@@ -570,16 +581,17 @@ export default function AgreementDetails({ route, navigation }) {
                             style={styles.section}
                             onPress={() => navigation.navigate('RemoteUnload', {
                                 waybill_id,
-                                waybill_no
+                                waybill_no,
+                                unloadPlaces // 传递异地卸货点数据
                             })}
                         >
                             <Text style={styles.label}>异地卸货点/费用</Text>
                             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={styles.value}>
-                                    {waybillInfo.nonlocal_unload_count}
+                                    {waybillInfo?.nonlocal_unload_count || 0}
                                 </Text>
                                 <Text style={styles.value}>
-                                    {waybillInfo.nonlocal_unload_amount}
+                                    {waybillInfo?.nonlocal_unload_amount || 0}
                                 </Text>
                             </View>
                             <MaterialIcons
