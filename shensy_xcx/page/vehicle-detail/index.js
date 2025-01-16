@@ -170,7 +170,7 @@ const VehicleDetail = ({ route }) => {
                 {/* 证件照片 */}
                 <View style={styles.imageList}>
                     {renderImage(vehicleInfo.VehiclePolicyDesc, '车头商业保险单')}
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>交强险过期时间</Text>
                         <Text style={styles.value}>{vehicleInfo.compulsory_insurance_exp}</Text>
                     </View>
@@ -178,7 +178,7 @@ const VehicleDetail = ({ route }) => {
                     {renderImage(vehicleInfo.DrivingLicPicDesc, '注册车辆（牵引车）行驶证正页')}
                     {renderImage(vehicleInfo.DrivingLicSidePicDesc, '注册车辆（牵引车）行驶证年审页')}
                     
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>（牵引车）车辆年检过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.vehicle_annual_inspect_exp}</Text>
                     </View>
@@ -186,11 +186,11 @@ const VehicleDetail = ({ route }) => {
                     {renderImage(vehicleInfo.VechileOperationPicDesc, '注册车辆（牵引车）营运证正页')}
                     {renderImage(vehicleInfo.VechileOperationSidePicDesc, '注册车辆（牵引车）营运证年审页')}
                     
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>道路运输证号（牵引车）营运证</Text>
                         <Text style={styles.value}>{vehicleInfo.road_trans_cert_number}</Text>
                     </View>
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>（牵引车）营运证年审过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.vehicle_annual_audit_exp}</Text>
                     </View>
@@ -199,7 +199,7 @@ const VehicleDetail = ({ route }) => {
 
                     {/* 注册车辆（挂车）行驶证年审页 */}
                     {renderImage(vehicleInfo.TrailerDrivingLicSidePicDesc, '注册车辆（挂车）行驶证年审页')}
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>（挂车）车辆年检过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.trailer_annual_inspect_exp}</Text>
                     </View>
@@ -208,7 +208,7 @@ const VehicleDetail = ({ route }) => {
 
                     {/* 注册车辆（挂车）营运证年审页 */}
                     {renderImage(vehicleInfo.TrailerOperationSidePicDesc, '注册车辆（挂车）营运证年审页')}
-                    <View style={styles.infoItem}>
+                    <View style={[styles.infoItem, styles.dateItem]}>
                         <Text style={styles.label}>（挂车）营运证年审过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.trailer_annual_audit_exp}</Text>
                     </View>
@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: '#eee',
+        marginBottom: 10,
     },
     label: {
         fontSize: 14,
@@ -276,7 +277,10 @@ const styles = StyleSheet.create({
     imageWrapper: {
         overflow: 'hidden',
         borderRadius: 4,
-    }
+    },
+    dateItem: {
+        marginBottom: 10,
+    },
 });
 
 export default VehicleDetail; 
