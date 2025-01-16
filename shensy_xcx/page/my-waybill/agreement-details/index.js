@@ -73,16 +73,17 @@ const LightningPayModal = ({ visible, onClose, onConfirm }) => {
                     {/* 按钮区域 */}
                     <View style={styles.modalFooter}>
                         <TouchableOpacity 
-                            style={[styles.modalButton, styles.cancelButton]} 
+                            style={styles.modalButton} 
                             onPress={onClose}
                         >
-                            <Text style={styles.cancelButtonText}>不同意</Text>
+                            <Text style={styles.buttonText}>不同意</Text>
                         </TouchableOpacity>
+                        <View style={styles.buttonDivider} />
                         <TouchableOpacity 
-                            style={[styles.modalButton, styles.confirmButton]} 
+                            style={[styles.modalButton, { backgroundColor: '#1892e5' }]} 
                             onPress={onConfirm}
                         >
-                            <Text style={styles.confirmButtonText}>同意</Text>
+                            <Text style={[styles.buttonText, { color: '#fff' }]}>同意</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -1163,19 +1164,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    cancelButton: {
-        borderRightWidth: StyleSheet.hairlineWidth,
-        borderRightColor: '#eee',
+    buttonDivider: {
+        width: StyleSheet.hairlineWidth,
+        backgroundColor: '#eee',
     },
-    confirmButton: {
-        backgroundColor: '#fff',
-    },
-    cancelButtonText: {
+    buttonText: {
         fontSize: 16,
         color: '#666',
-    },
-    confirmButtonText: {
-        fontSize: 16,
-        color: '#1892e5',
     },
 }); 
