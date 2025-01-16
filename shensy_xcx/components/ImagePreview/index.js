@@ -1,55 +1,38 @@
 import React from 'react';
-import { View, Modal, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import ImageViewer from 'react-native-image-zoom-viewer';
+import { Modal, View, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const ImagePreview = ({ visible, images = [], onClose }) => {
-    // 处理图片数据格式
-    const processedImages = images.map(image => {
-        // 如果 image 是字符串，直接作为 url 使用
-        if (typeof image === 'string') {
-            return {
-                url: image.startsWith('http') 
-                    ? image 
-                    : `https://test-shensy-obs.ship56.net/${image}`
-            };
-        }
-        // 如果 image 是对象且有 url 属性
-        if (image && image.url) {
-            return {
-                url: image.url.startsWith('http') 
-                    ? image.url 
-                    : `https://test-shensy-obs.ship56.net/${image.url}`
-            };
-        }
-        // 如果都不是，返回一个空的占位图
-        return {
-            url: 'https://test-shensy-obs.ship56.net/placeholder.png'
-        };
-    });
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+const ImagePreview = ({ visible, imageUrl, onClose }) => {
+    if (!visible || !imageUrl) return null;
 
     return (
-        <Modal visible={visible} transparent={true}>
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={onClose}
+        >
             <View style={styles.container}>
                 <TouchableOpacity 
                     style={styles.closeButton}
                     onPress={onClose}
                 >
-                    <MaterialCommunityIcons 
-                        name="close" 
-                        size={24} 
-                        color="#fff" 
+                    <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={styles.imageContainer}
+                    onPress={onClose}
+                >
+                    <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.image}
+                        resizeMode="contain"
                     />
                 </TouchableOpacity>
-                <ImageViewer
-                    imageUrls={processedImages}
-                    enableSwipeDown={true}
-                    onSwipeDown={onClose}
-                    saveToLocalByLongPress={false}
-                    backgroundColor="rgba(0,0,0,0.9)"
-                    renderIndicator={() => null}
-                    footerContainerStyle={styles.footerContainer}
-                />
             </View>
         </Modal>
     );
@@ -58,17 +41,26 @@ const ImagePreview = ({ visible, images = [], onClose }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     closeButton: {
         position: 'absolute',
         top: 40,
         right: 20,
-        zIndex: 999,
+        zIndex: 1,
         padding: 10,
     },
-    footerContainer: {
-        bottom: 60,
+    imageContainer: {
+        width: screenWidth,
+        height: screenHeight,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    image: {
+        width: screenWidth,
+        height: screenHeight * 0.8,
     },
 });
 

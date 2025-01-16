@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView, TouchableOpacity } from 'react-native';
 import request from '../../util/request';
 import toast from '../../util/toast';
+import ImagePreview from '../../components/ImagePreview';
 
 const VehicleDetail = ({ route }) => {
     const { user_vehicleid } = route.params;
     const [vehicleInfo, setVehicleInfo] = useState(null);
     const [vehicleOptions, setVehicleOptions] = useState({});
     const [displayTexts, setDisplayTexts] = useState({});
+    // 添加预览状态
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewImage, setPreviewImage] = useState('');
 
     // 获取车辆详情
     const getVehicleInfo = async () => {
@@ -62,6 +66,37 @@ const VehicleDetail = ({ route }) => {
     useEffect(() => {
         getVehicleInfo();
     }, []);
+
+    // 处理图片点击
+    const handleImagePress = (imageUrl) => {
+        console.log('Preview Image URL:', imageUrl); // 添加日志
+        setPreviewImage(imageUrl);
+        setPreviewVisible(true);
+    };
+
+    // 修改图片渲染部分
+    const renderImage = (imageDesc, label) => {
+        if (!imageDesc?.[0]?.obs_url_text) return null;
+        const imageUrl = imageDesc[0].obs_url_text;
+        
+        console.log('Image URL:', imageUrl); // 添加日志
+        
+        return (
+            <View style={styles.imageItem}>
+                <Text style={styles.imageLabel}>{label}</Text>
+                <TouchableOpacity 
+                    onPress={() => handleImagePress(imageUrl)}
+                    activeOpacity={0.7}
+                >
+                    <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.image}
+                        resizeMode="cover"
+                    />
+                </TouchableOpacity>
+            </View>
+        );
+    };
 
     if (!vehicleInfo) return null;
 
@@ -134,66 +169,23 @@ const VehicleDetail = ({ route }) => {
 
                 {/* 证件照片 */}
                 <View style={styles.imageList}>
-                    {/* 车头商业保险单 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>车头商业保险单</Text>
-                        {vehicleInfo.VehiclePolicyDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.VehiclePolicyDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.VehiclePolicyDesc, '车头商业保险单')}
                     <View style={styles.infoItem}>
                         <Text style={styles.label}>交强险过期时间</Text>
                         <Text style={styles.value}>{vehicleInfo.compulsory_insurance_exp}</Text>
                     </View>
-                    {/* 注册车辆（牵引车）行驶证正页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（牵引车）行驶证正页</Text>
-                        {vehicleInfo.DrivingLicPicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.DrivingLicPicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
-
-                    {/* 注册车辆（牵引车）行驶证年审页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（牵引车）行驶证年审页</Text>
-                        {vehicleInfo.DrivingLicSidePicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.DrivingLicSidePicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    
+                    {renderImage(vehicleInfo.DrivingLicPicDesc, '注册车辆（牵引车）行驶证正页')}
+                    {renderImage(vehicleInfo.DrivingLicSidePicDesc, '注册车辆（牵引车）行驶证年审页')}
+                    
                     <View style={styles.infoItem}>
                         <Text style={styles.label}>（牵引车）车辆年检过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.vehicle_annual_inspect_exp}</Text>
                     </View>
-                    {/* 注册车辆（牵引车）营运证正页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（牵引车）营运证正页</Text>
-                        {vehicleInfo.VechileOperationPicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.VechileOperationPicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
 
-                    {/* 注册车辆（牵引车）营运证年审页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（牵引车）营运证年审页</Text>
-                        {vehicleInfo.VechileOperationSidePicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.VechileOperationSidePicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.VechileOperationPicDesc, '注册车辆（牵引车）营运证正页')}
+                    {renderImage(vehicleInfo.VechileOperationSidePicDesc, '注册车辆（牵引车）营运证年审页')}
+                    
                     <View style={styles.infoItem}>
                         <Text style={styles.label}>道路运输证号（牵引车）营运证</Text>
                         <Text style={styles.value}>{vehicleInfo.road_trans_cert_number}</Text>
@@ -203,67 +195,34 @@ const VehicleDetail = ({ route }) => {
                         <Text style={styles.value}>{vehicleInfo.vehicle_annual_audit_exp}</Text>
                     </View>
                     {/* 注册车辆（挂车）行驶证正页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（挂车）行驶证正页</Text>
-                        {vehicleInfo.TrailerDrivingLicPicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.TrailerDrivingLicPicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.TrailerDrivingLicPicDesc, '注册车辆（挂车）行驶证正页')}
 
                     {/* 注册车辆（挂车）行驶证年审页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（挂车）行驶证年审页</Text>
-                        {vehicleInfo.TrailerDrivingLicSidePicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.TrailerDrivingLicSidePicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.TrailerDrivingLicSidePicDesc, '注册车辆（挂车）行驶证年审页')}
                     <View style={styles.infoItem}>
                         <Text style={styles.label}>（挂车）车辆年检过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.trailer_annual_inspect_exp}</Text>
                     </View>
                     {/* 注册车辆（挂车）营运证正页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（挂车）营运证正页</Text>
-                        {vehicleInfo.TrailerOperationPicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.TrailerOperationPicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.TrailerOperationPicDesc, '注册车辆（挂车）营运证正页')}
 
                     {/* 注册车辆（挂车）营运证年审页 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>注册车辆（挂车）营运证年审页</Text>
-                        {vehicleInfo.TrailerOperationSidePicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.TrailerOperationSidePicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.TrailerOperationSidePicDesc, '注册车辆（挂车）营运证年审页')}
                     <View style={styles.infoItem}>
                         <Text style={styles.label}>（挂车）营运证年审过期日期</Text>
                         <Text style={styles.value}>{vehicleInfo.trailer_annual_audit_exp}</Text>
                     </View>
                     {/* 人车合影照片 */}
-                    <View style={styles.imageItem}>
-                        <Text style={styles.imageLabel}>人车合影照片</Text>
-                        {vehicleInfo.ManVehiclePicDesc?.[0]?.obs_url_text && (
-                            <Image
-                                source={{ uri: vehicleInfo.ManVehiclePicDesc[0].obs_url_text }}
-                                style={styles.image}
-                            />
-                        )}
-                    </View>
+                    {renderImage(vehicleInfo.ManVehiclePicDesc, '人车合影照片')}
                 </View>
             </ScrollView>
+
+            {/* 添加图片预览组件 */}
+            <ImagePreview
+                visible={previewVisible}
+                imageUrl={previewImage}
+                onClose={() => setPreviewVisible(false)}
+            />
         </SafeAreaView>
     );
 };
@@ -301,6 +260,7 @@ const styles = StyleSheet.create({
     },
     imageItem: {
         marginBottom: 15,
+        width: '100%',
     },
     imageLabel: {
         fontSize: 14,
@@ -312,6 +272,11 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 4,
     },
+    // 添加点击态样式
+    imageWrapper: {
+        overflow: 'hidden',
+        borderRadius: 4,
+    }
 });
 
 export default VehicleDetail; 
