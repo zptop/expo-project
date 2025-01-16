@@ -18,9 +18,78 @@ import request from '../../../util/request';
 import toast from '../../../util/toast';
 import ImagePreview from '../../../components/ImagePreview';
 import DatePicker from '../../../components/DatePicker';
-import Dialog from '../../../components/Dialog';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
+// 闪电付确认弹窗
+const LightningPayModal = ({ visible, onClose, onConfirm }) => {
+    return (
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="fade"
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalContainer}>
+                    {/* 标题 */}
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>闪电付申请须知</Text>
+                    </View>
+
+                    {/* 内容区域 */}
+                    <ScrollView style={styles.modalContent}>
+                        <Text style={styles.modalText}>
+                            申请闪电付后，将会在结余运费金额中扣除一定比例手续费或用里程值抵扣手续费。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            闪电付申请规则：
+                        </Text>
+                        <Text style={styles.modalText}>
+                            1. 回单寄回项目组，项目经理审核通过之后，司机方可申请闪电付。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            2. 闪电付申请为司机主观意识申请，我司不强制司机申请闪电付。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            3. 闪电付申请之后将无法撤销。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            闪电付申请相关免责声明，请务必认真阅读：
+                        </Text>
+                        <Text style={styles.modalText}>
+                            1. 由于用户将个人密码告知他人或与他人共享注册账户，由此导致的任何个人资料泄露，由此产生的纠纷我司不负任何责任。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            2. 如因系统维护或升级而需暂停此服务时，将事先公告。如因政府及非本企业控制范围外的硬件故障或者其他不可抗力而导致暂停服务，于暂停服务期间造成的一切不便与损失，我司不负任何责任。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            3. 本声明未涉及的问题参照国家有关法律法规，当本声明与国家法律法规冲突时，以国家法律法规为准。
+                        </Text>
+                        <Text style={styles.modalText}>
+                            4. 本声明修改权、更新权及最终解释权均属上海申丝企业发展有限公司所有。
+                        </Text>
+                    </ScrollView>
+
+                    {/* 按钮区域 */}
+                    <View style={styles.modalFooter}>
+                        <TouchableOpacity 
+                            style={[styles.modalButton, styles.cancelButton]} 
+                            onPress={onClose}
+                        >
+                            <Text style={styles.cancelButtonText}>不同意</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[styles.modalButton, styles.confirmButton]} 
+                            onPress={onConfirm}
+                        >
+                            <Text style={styles.confirmButtonText}>同意</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};
 
 export default function AgreementDetails({ route, navigation }) {
     const { waybill_id, waybill_no, from_flag } = route.params;
@@ -744,36 +813,11 @@ export default function AgreementDetails({ route, navigation }) {
                 </View>
             </View>
 
-            {/* 修改闪电付确认弹窗 */}
-            <Dialog
+            <LightningPayModal
                 visible={lightningVisible}
-                title="闪电付申请须知"
-                onCancel={() => setLightningVisible(false)}
+                onClose={() => setLightningVisible(false)}
                 onConfirm={handleLightningConfirm}
-                cancelText="不同意"
-                confirmText="同意"
-            >
-                <ScrollView style={styles.dialogScroll}>
-                    <Text style={styles.dialogText}>
-                        申请闪电付后，将会在结余运费金额中扣除一定比例手续费或用里程值抵扣手续费。
-                    </Text>
-                    <Text style={[styles.dialogText, styles.dialogTitle]}>闪电付申请规则：</Text>
-                    <Text style={styles.dialogText}>
-                        1. 回单寄回项目组，项目经理审核通过之后，司机方可申请闪电付。{'\n'}
-                        2. 闪电付申请为司机主观意识申请，我司不强制司机申请闪电付。{'\n'}
-                        3. 闪电付申请之后将无法撤销。
-                    </Text>
-                    <Text style={[styles.dialogText, styles.dialogTitle]}>
-                        闪电付申请相关免责声明，请务必认真阅读：
-                    </Text>
-                    <Text style={styles.dialogText}>
-                        1. 由于用户将个人密码告知他人或与他人共享注册账户，由此导致的任何个人资料泄露，由此产生的纠纷我司不负任何责任。{'\n\n'}
-                        2. 如因系统维护或升级而需暂停此服务时，将事先公告。如因政府及非本企业控制范围外的硬件故障或者其他不可抗力而导致暂停服务，于暂停服务期间造成的一切不便与损失，我司不负任何责任。{'\n\n'}
-                        3. 本声明未涉及的问题参照国家有关法律法规，当本声明与国家法律法规冲突时，以国家法律法规为准。{'\n\n'}
-                        4. 本声明修改权、更新权及最终解释权均属上海申丝企业发展有限公司所有。
-                    </Text>
-                </ScrollView>
-            </Dialog>
+            />
 
             {/* 图片预览组件 - 移到最外层 */}
             <ImagePreview
@@ -1072,5 +1116,66 @@ const styles = StyleSheet.create({
     headerRightButton: {
         paddingHorizontal: 15,
         paddingVertical: 10,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '85%',
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    modalHeader: {
+        height: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#eee',
+    },
+    modalTitle: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
+    },
+    modalContent: {
+        maxHeight: 400,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+    },
+    modalText: {
+        fontSize: 14,
+        color: '#333',
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        height: 45,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: '#eee',
+    },
+    modalButton: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cancelButton: {
+        borderRightWidth: StyleSheet.hairlineWidth,
+        borderRightColor: '#eee',
+    },
+    confirmButton: {
+        backgroundColor: '#fff',
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        color: '#666',
+    },
+    confirmButtonText: {
+        fontSize: 16,
+        color: '#1892e5',
     },
 }); 
