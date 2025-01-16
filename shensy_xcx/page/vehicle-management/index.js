@@ -140,6 +140,9 @@ export default function VehicleManagement({ navigation }) {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.vehicleRight}>
+                    {item.is_lock === 1 && <TouchableOpacity style={[styles.iconButton, styles.editButton,{backgroundColor:'#ff976a'}]}>
+                        <MaterialCommunityIcons name="lock" size={20} color="#fff" />
+                    </TouchableOpacity>}
                     <TouchableOpacity
                         style={[styles.iconButton, styles.editButton]}
                         onPress={() => handleEdit(item.user_vehicleid, item.vehicle_number)}
