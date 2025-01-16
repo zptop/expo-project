@@ -1375,7 +1375,7 @@ const styles = StyleSheet.create({
     inputLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        width: 120,
+        // width: 120,
     },
     required: {
         color: '#ff4d4f',
