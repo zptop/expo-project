@@ -1,52 +1,47 @@
 {
   "expo": {
-    "name": "shensy_xcx",
+    "name": "申丝司机",
     "slug": "shensy_xcx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "**/*",
+      "assets/**/*",
+      "components/**/*",
+      "page/**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.your.package",
-      "config": {
-        "usesNonExemptEncryption": false,
-        "amap": {
-          "apiKey": "your_ios_key"
-        }
-      },
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "需要获取您的位置信息以显示地图",
-        "NSLocationAlwaysUsageDescription": "需要获取您的位置信息以显示地图"
-      }
+      "bundleIdentifier": "com.shensy.driver"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.shensy.driver",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ],
-      "package": "com.your.package",
-      "config": {
-        "amap": {
-          "apiKey": "your_android_key"
-        }
-      }
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "plugins": [
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
     }
   }
 }
