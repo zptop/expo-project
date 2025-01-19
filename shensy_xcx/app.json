@@ -27,6 +27,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.shensy.driver",
+      "versionCode": 1,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -35,13 +36,11 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
-    "plugins": [
-      "expo-dev-client"
-    ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "c5d6a2a9-b8a7-4ee2-a41b-06a5029b2cee"
       }
-    }
+    },
+    "owner": "zp_top"
   }
 }
