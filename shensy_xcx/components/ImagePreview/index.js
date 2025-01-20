@@ -1,11 +1,34 @@
-import React from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, View, StyleSheet, TouchableOpacity, Image, Dimensions, FlatList } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const ImagePreview = ({ visible, imageUrl, onClose }) => {
-    if (!visible || !imageUrl) return null;
+const ImagePreview = ({ visible, images = [], onClose }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    if (!visible || !images.length) return null;
+
+    const renderItem = ({ item }) => (
+        <TouchableOpacity
+            activeOpacity={1}
+            style={styles.imageContainer}
+            onPress={onClose}
+        >
+            <Image
+                source={{ uri: item }}
+                style={styles.image}
+                resizeMode="contain"
+            />
+        </TouchableOpacity>
+    );
+
+    const onScroll = (event) => {
+        const slideSize = event.nativeEvent.layoutMeasurement.width;
+        const index = event.nativeEvent.contentOffset.x / slideSize;
+        const roundIndex = Math.round(index);
+        setCurrentIndex(roundIndex);
+    };
 
     return (
         <Modal
@@ -22,17 +45,29 @@ const ImagePreview = ({ visible, imageUrl, onClose }) => {
                     <MaterialCommunityIcons name="close" size={24} color="#fff" />
                 </TouchableOpacity>
                 
-                <TouchableOpacity
-                    activeOpacity={1}
-                    style={styles.imageContainer}
-                    onPress={onClose}
-                >
-                    <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.image}
-                        resizeMode="contain"
-                    />
-                </TouchableOpacity>
+                <FlatList
+                    data={images}
+                    renderItem={renderItem}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={onScroll}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+
+                {images.length > 1 && (
+                    <View style={styles.pagination}>
+                        {images.map((_, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.paginationDot,
+                                    currentIndex === index && styles.paginationDotActive
+                                ]}
+                            />
+                        ))}
+                    </View>
+                )}
             </View>
         </Modal>
     );
@@ -61,6 +96,22 @@ const styles = StyleSheet.create({
     image: {
         width: screenWidth,
         height: screenHeight * 0.8,
+    },
+    pagination: {
+        position: 'absolute',
+        bottom: 40,
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    paginationDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        marginHorizontal: 4,
+    },
+    paginationDotActive: {
+        backgroundColor: '#fff',
     },
 });
 

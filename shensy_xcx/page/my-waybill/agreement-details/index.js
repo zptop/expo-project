@@ -415,12 +415,18 @@ export default function AgreementDetails({ route, navigation }) {
                             <Text style={styles.label}>单号照片</Text>
                             <View style={styles.imageContainer}>
                                 {waybillInfo.order_no_media_text && waybillInfo.order_no_media_text.split(',').filter(Boolean).map((url, index) => (
-                                    <TouchableOpacity key={index} onPress={() => {
-                                        const images = waybillInfo.order_no_media_text.split(',').filter(Boolean);
-                                        setPreviewImages(images);
-                                        setPreviewVisible(true);
-                                    }}>
-                                        <Image source={{ uri: url }} style={styles.thumbnail} />
+                                    <TouchableOpacity 
+                                        key={index} 
+                                        onPress={() => {
+                                            const images = waybillInfo.order_no_media_text.split(',').filter(Boolean);
+                                            setPreviewImages(images);
+                                            setPreviewVisible(true);
+                                        }}
+                                    >
+                                        <Image 
+                                            source={{ uri: url }} 
+                                            style={styles.thumbnail} 
+                                        />
                                     </TouchableOpacity>
                                 ))}
                                 {(!waybillInfo.order_no_media_text || waybillInfo.order_no_media_text.length === 0) && (
@@ -820,7 +826,7 @@ export default function AgreementDetails({ route, navigation }) {
                 onConfirm={handleLightningConfirm}
             />
 
-            {/* 图片预览组件 - 移到最外层 */}
+            {/* 图片预览组件 */}
             <ImagePreview
                 visible={previewVisible}
                 images={previewImages}
