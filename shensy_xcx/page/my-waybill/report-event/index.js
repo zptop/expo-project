@@ -16,6 +16,7 @@ export default function ReportEvent({ route, navigation }) {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     // 检查位置权限
     const checkLocationPermission = async () => {
@@ -39,14 +40,32 @@ export default function ReportEvent({ route, navigation }) {
     const getUserLocation = async () => {
         try {
             const hasPermission = await checkLocationPermission();
-            if (!hasPermission) return;
+            if (!hasPermission) {
+                toast.show('需要位置权限才能继续操作');
+                return;
+            }
 
-            const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High
+            // 先尝试获取最后已知位置
+            let lastLocation = await Location.getLastKnownPositionAsync();
+            if (lastLocation) {
+                setLocation(lastLocation.coords);
+            }
+
+            // 然后获取当前位置
+            const currentLocation = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced, // 降低精度要求，提高成功率
+                timeout: 15000, // 15秒超时
+                maximumAge: 10000, // 允许使用10秒内的缓存位置
             });
-            setLocation(location.coords);
+            
+            if (currentLocation) {
+                setLocation(currentLocation.coords);
+            } else if (!lastLocation) {
+                throw new Error('无法获取位置信息');
+            }
         } catch (error) {
-            toast.show('请打开GPS定位');
+            console.error('获取位置失败:', error);
+            toast.show('获取位置信息失败，请确保GPS已开启');
         }
     };
 
@@ -186,9 +205,19 @@ export default function ReportEvent({ route, navigation }) {
 
     // 选择图片
     const pickImage = async (type) => {
+        if (uploading) {
+            toast.show('正在上传中，请稍候...');
+            return;
+        }
+
         if (listData.length >= 10) {
             toast.show(`最多只能上传10个${flag === 'receipt' ? '回单' : '异常信息'}`);
             return;
+        }
+
+        // 如果没有位置信息，先尝试重新获取
+        if (!location) {
+            await getUserLocation();
         }
 
         try {
@@ -219,12 +248,16 @@ export default function ReportEvent({ route, navigation }) {
                     setUploading(true);
                     const url_key = await handleImageResult(uri);
                     
+                    // 再次检查位置信息
                     if (!location) {
-                        toast.show('无法获取位置信息');
-                        return;
+                        // 最后一次尝试获取位置
+                        await getUserLocation();
+                        if (!location) {
+                            toast.show('无法获取位置信息，请确保GPS已开启');
+                            return;
+                        }
                     }
 
-                    // 根据 flag 使用不同的接口
                     const url = flag === 'receipt' 
                         ? '/app_driver/waybill/addNewReceipt'
                         : '/app_driver/waybill/addReportEvent';
@@ -255,6 +288,7 @@ export default function ReportEvent({ route, navigation }) {
         } catch (error) {
             console.error('选择图片失败:', error);
             toast.show('选择图片失败');
+            setUploading(false);
         }
     };
 
@@ -319,9 +353,26 @@ export default function ReportEvent({ route, navigation }) {
         (async () => {
             await requestMediaLibraryPermission();
             await requestCameraPermission();
+            await getUserLocation(); // 初始化时获取位置
         })();
-        getUserLocation();
         getList();
+
+        // 添加位置监听
+        const locationSubscription = Location.watchPositionAsync(
+            {
+                accuracy: Location.Accuracy.Balanced,
+                timeInterval: 10000, // 每10秒更新一次
+                distanceInterval: 10, // 或移动10米更新一次
+            },
+            (newLocation) => {
+                setLocation(newLocation.coords);
+            }
+        );
+
+        // 清理函数
+        return () => {
+            locationSubscription.then(sub => sub.remove());
+        };
     }, []);
 
     // 更新页面标题

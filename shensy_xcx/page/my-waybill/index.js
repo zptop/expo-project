@@ -844,6 +844,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#989898',
     paddingHorizontal: 28,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden'
   },
   status: {
     fontSize: 14,
