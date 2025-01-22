@@ -92,14 +92,12 @@ export default function WaybillDetail({ route, navigation }) {
     // 修改路线规划函数
     const getRoutePlan = async (fromLat, fromLng, toLat, toLng) => {
         try {
-            // 使用 JS API 的路径规划接口
             const url = `https://restapi.amap.com/v3/direction/driving?` +
-                `key=${config.amapkey}` +
+                `key=0d9a67c3aa750149be4ec1705d46e56a` +  // 直接使用Android平台的key
                 `&origin=${fromLng},${fromLat}` +
                 `&destination=${toLng},${toLat}` +
                 `&output=json` +
-                `&extensions=base` +
-                `&sig=${config.amapSecretKey}`;  // 添加安全密钥
+                `&extensions=base`;
 
             console.log('完整请求URL:', url);
 

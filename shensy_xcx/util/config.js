@@ -6,7 +6,7 @@ const edition_num = "V1.0.0";
 // 根据平台选择对应的 key
 const amapkey = Platform.select({
     ios: 'your_ios_key',
-    android: 'your_android_key',
+    android: '0d9a67c3aa750149be4ec1705d46e56a',
 });
 const amapSecretKey = '	706f07e7fe78575fd3ef67c0e8f160ac'; // 安全密钥
 let config = {

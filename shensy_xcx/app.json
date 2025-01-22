@@ -19,7 +19,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shensy.driver"
+      "bundleIdentifier": "com.shensy.driver",
+      "config": {
+        "amap": {
+          "key": ""
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +39,12 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "config": {
+        "amap": {
+          "key": "0d9a67c3aa750149be4ec1705d46e56a"
+        }
+      }
     },
     "extra": {
       "eas": {

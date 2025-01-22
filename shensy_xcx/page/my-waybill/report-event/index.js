@@ -18,9 +18,17 @@ export default function ReportEvent({ route, navigation }) {
     const [refreshing, setRefreshing] = useState(false);
     const [uploading, setUploading] = useState(false);
 
-    // 检查位置权限
+    // 检查位置权限和GPS状态
     const checkLocationPermission = async () => {
         try {
+            // 先检查GPS是否开启
+            const providerStatus = await Location.getProviderStatusAsync();
+            if (!providerStatus.locationServicesEnabled) {
+                toast.show('请开启GPS定位服务');
+                return false;
+            }
+
+            // 再检查位置权限
             let { status } = await Location.getForegroundPermissionsAsync();
             if (status !== 'granted') {
                 const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
@@ -29,6 +37,7 @@ export default function ReportEvent({ route, navigation }) {
                     return false;
                 }
             }
+
             return true;
         } catch (error) {
             console.error('检查位置权限失败:', error);
@@ -41,31 +50,44 @@ export default function ReportEvent({ route, navigation }) {
         try {
             const hasPermission = await checkLocationPermission();
             if (!hasPermission) {
-                toast.show('需要位置权限才能继续操作');
-                return;
+                return false;
             }
 
             // 先尝试获取最后已知位置
-            let lastLocation = await Location.getLastKnownPositionAsync();
+            let lastLocation = await Location.getLastKnownPositionAsync({
+                maxAge: 60000 // 允许使用1分钟内的缓存位置
+            });
+            
             if (lastLocation) {
                 setLocation(lastLocation.coords);
             }
 
             // 然后获取当前位置
             const currentLocation = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced, // 降低精度要求，提高成功率
-                timeout: 15000, // 15秒超时
-                maximumAge: 10000, // 允许使用10秒内的缓存位置
+                accuracy: Location.Accuracy.Balanced,
+                timeout: 15000,
+                maxAge: 10000,
+                mayShowUserSettingsDialog: true // 允许显示系统设置对话框
             });
             
             if (currentLocation) {
                 setLocation(currentLocation.coords);
-            } else if (!lastLocation) {
+                return true;
+            }
+            
+            if (!lastLocation) {
                 throw new Error('无法获取位置信息');
             }
+            
+            return true;
         } catch (error) {
             console.error('获取位置失败:', error);
-            toast.show('获取位置信息失败，请确保GPS已开启');
+            if (error.code === 'E_LOCATION_SETTINGS_UNSATISFIED') {
+                toast.show('请开启GPS定位服务并授予位置权限');
+            } else {
+                toast.show('获取位置信息失败，请确保GPS已开启');
+            }
+            return false;
         }
     };
 
@@ -215,9 +237,10 @@ export default function ReportEvent({ route, navigation }) {
             return;
         }
 
-        // 如果没有位置信息，先尝试重新获取
-        if (!location) {
-            await getUserLocation();
+        // 检查位置信息
+        const locationSuccess = await getUserLocation();
+        if (!locationSuccess) {
+            return;
         }
 
         try {
