@@ -35,7 +35,13 @@
         "UIBackgroundModes": [
           "location",
           "fetch"
-        ]
+        ],
+        "AMapApiKey": "218cfd67a9c19db9a4588d5b47d5e1df"
+      },
+      "config": {
+        "amap": {
+          "apiKey": "218cfd67a9c19db9a4588d5b47d5e1df"
+        }
       }
     },
     "android": {
@@ -51,7 +57,12 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "config": {
+        "amap": {
+          "apiKey": "218cfd67a9c19db9a4588d5b47d5e1df"
+        }
+      }
     },
     "extra": {
       "eas": {

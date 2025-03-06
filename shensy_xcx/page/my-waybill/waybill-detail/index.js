@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Dimensions, Alert, SafeAreaView } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView from 'react-native-maps';
+import { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import request from '../../../util/request';
 import toast from '../../../util/toast';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import polyline from '@mapbox/polyline';
 
 const { width } = Dimensions.get('window');
 
@@ -228,20 +230,22 @@ export default function WaybillDetail({ route, navigation }) {
                     }
                 });
 
+                // 使用 polyline 编码路线点
+                const encodedPolyline = polyline.encode(allPoints.map(point => [point.latitude, point.longitude]));
+                
                 return allPoints;
             } else {
-                // 如果还有重试次数，则重试
                 if (retryCount > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒后重试
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     return getRoutePlan(fromLat, fromLng, toLat, toLng, retryCount - 1);
                 }
-                // 如果重试次数用完，返回直线路径
                 return [
                     { latitude: fromLat, longitude: fromLng },
                     { latitude: toLat, longitude: toLng }
                 ];
             }
         } catch (error) {
+            console.error('路线规划失败:', error);
             if (retryCount > 0) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 return getRoutePlan(fromLat, fromLng, toLat, toLng, retryCount - 1);
@@ -304,6 +308,7 @@ export default function WaybillDetail({ route, navigation }) {
                         showsMyLocationButton={true}
                         showsCompass={true}
                         showsScale={true}
+                        provider={PROVIDER_DEFAULT}
                     >
                         {markers.map(marker => (
                             <Marker
