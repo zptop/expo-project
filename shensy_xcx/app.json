@@ -11,6 +11,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "允许$(PRODUCT_NAME)获取您的位置以提供导航服务"
+        }
+      ]
+    ],
     "assetBundlePatterns": [
       "**/*",
       "assets/**/*",
@@ -20,10 +28,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.shensy.driver",
-      "config": {
-        "amap": {
-          "key": ""
-        }
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "需要获取您的位置信息以提供导航服务",
+        "NSLocationAlwaysUsageDescription": "需要获取您的位置信息以提供导航服务",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "需要获取您的位置信息以提供导航服务",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -39,12 +51,7 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ],
-      "config": {
-        "amap": {
-          "key": "0d9a67c3aa750149be4ec1705d46e56a"
-        }
-      }
+      ]
     },
     "extra": {
       "eas": {

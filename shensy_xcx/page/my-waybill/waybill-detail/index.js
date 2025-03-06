@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Dimensions, Alert, SafeAreaView } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import request from '../../../util/request';
 import toast from '../../../util/toast';
 import * as Location from 'expo-location';
-import config from '../../../util/config';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -22,14 +21,15 @@ export default function WaybillDetail({ route, navigation }) {
     const [markers, setMarkers] = useState([]);
     const [currentLocation, setCurrentLocation] = useState(null);
     const [polylineCoords, setPolylineCoords] = useState([]);
+    const [routeCoordinates, setRouteCoordinates] = useState([]);
+    const mapRef = useRef(null);
 
     // 检查位置权限
     const checkLocationPermission = async () => {
         try {
-            let { status } = await Location.getForegroundPermissionsAsync();
-
+            const { status } = await Location.getForegroundPermissionsAsync();
+            
             if (status !== 'granted') {
-                // 请求权限
                 const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
                 if (newStatus !== 'granted') {
                     Alert.alert(
@@ -69,9 +69,9 @@ export default function WaybillDetail({ route, navigation }) {
             if (!hasPermission) return;
 
             toast.show('正在获取位置信息...', -1);
+            
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
-                timeout: 15000,
+                accuracy: Location.Accuracy.High
             });
 
             if (!location?.coords) {
@@ -87,146 +87,6 @@ export default function WaybillDetail({ route, navigation }) {
             toast.show('获取位置信息失败，请检查GPS是否开启');
             return null;
         }
-    };
-
-    // 修改路线规划函数
-    const getRoutePlan = async (fromLat, fromLng, toLat, toLng) => {
-        try {
-            const url = `https://restapi.amap.com/v3/direction/driving?` +
-                `key=0d9a67c3aa750149be4ec1705d46e56a` +  // 直接使用Android平台的key
-                `&origin=${fromLng},${fromLat}` +
-                `&destination=${toLng},${toLat}` +
-                `&output=json` +
-                `&extensions=base`;
-
-            console.log('完整请求URL:', url);
-
-            const response = await fetch(url);
-            const result = await response.json();
-
-            if (result.status === '1' && result.route?.paths?.[0]?.steps) {
-                const steps = result.route.paths[0].steps;
-                let allPoints = [];
-
-                steps.forEach(step => {
-                    if (step.polyline) {
-                        const pointsArr = step.polyline.split(';');
-                        const points = pointsArr.map(point => {
-                            const [lng, lat] = point.split(',').map(Number);
-                            return {
-                                latitude: lat,
-                                longitude: lng
-                            };
-                        });
-                        allPoints = [...allPoints, ...points];
-                    }
-                });
-
-                return allPoints;
-            } else {
-                console.error('路线规划失败:', result);
-                return [
-                    { latitude: fromLat, longitude: fromLng },
-                    { latitude: toLat, longitude: toLng }
-                ];
-            }
-        } catch (error) {
-            console.error('获取路线规划异常:', error);
-            return [
-                { latitude: fromLat, longitude: fromLng },
-                { latitude: toLat, longitude: toLng }
-            ];
-        }
-    };
-
-    // 修改更新地图标记和路线的函数
-    const updateMapMarkersAndRoute = async (waybillData, driverLocation) => {
-        const { from_lat, from_lng, to_lat, to_lng } = waybillData;
-
-        // 确保坐标是数字类型且有效
-        const fromLat = parseFloat(from_lat) || 39.908822999999984;
-        const fromLng = parseFloat(from_lng) || 116.39747;
-        const toLat = parseFloat(to_lat) || fromLat;
-        const toLng = parseFloat(to_lng) || fromLng;
-
-        console.log('起点坐标:', fromLat, fromLng); // 调试输出
-        console.log('终点坐标:', toLat, toLng); // 调试输出
-
-        // 获取规划路线
-        const routePoints = await getRoutePlan(fromLat, fromLng, toLat, toLng);
-
-        // 创建标记点数组
-        const newMarkers = [
-            {
-                id: 1,
-                coordinate: {
-                    latitude: fromLat,
-                    longitude: fromLng
-                },
-                title: '提货地',
-                description: waybillData.from_code_text || '',
-                type: 'start'
-            },
-            {
-                id: 2,
-                coordinate: {
-                    latitude: toLat,
-                    longitude: toLng
-                },
-                title: '目的地',
-                description: waybillData.to_code_text || '',
-                type: 'end'
-            }
-        ];
-
-        // 如果有司机位置，添加司机标记
-        if (driverLocation?.latitude && driverLocation?.longitude) {
-            newMarkers.push({
-                id: 3,
-                coordinate: {
-                    latitude: parseFloat(driverLocation.latitude),
-                    longitude: parseFloat(driverLocation.longitude)
-                },
-                title: '我在这里',
-                type: 'driver'
-            });
-        }
-
-        setMarkers(newMarkers);
-
-        // 设置路线坐标点
-        if (routePoints && routePoints.length > 0) {
-            console.log('使用规划路线'); // 调试输出
-            setPolylineCoords(routePoints);
-        } else {
-            console.log('使用直线连接'); // 调试输出
-            // 如果获取规划路线失败，使用直线连接
-            const routeCoords = [
-                { latitude: fromLat, longitude: fromLng }
-            ];
-
-            if (driverLocation?.latitude && driverLocation?.longitude) {
-                routeCoords.push({
-                    latitude: parseFloat(driverLocation.latitude),
-                    longitude: parseFloat(driverLocation.longitude)
-                });
-            }
-
-            routeCoords.push({ latitude: toLat, longitude: toLng });
-            setPolylineCoords(routeCoords);
-        }
-
-        // 调整地图视野范围
-        const points = routePoints || polylineCoords;
-        const lats = points.map(coord => coord.latitude);
-        const lngs = points.map(coord => coord.longitude);
-
-        setRegion({
-            latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
-            longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
-            latitudeDelta: Math.max((Math.max(...lats) - Math.min(...lats)) * 1.5, 0.0922),
-            longitudeDelta: Math.max((Math.max(...lngs) - Math.min(...lngs)) * 1.5, 0.0421),
-        });
     };
 
     // 获取运单详情
@@ -263,6 +123,136 @@ export default function WaybillDetail({ route, navigation }) {
         }
     };
 
+    // 修改路线规划函数
+    const getRoutePlan = async (fromLat, fromLng, toLat, toLng) => {
+        try {
+            // 使用高德地图 Web 服务 API 的驾车路线规划接口
+            const url = `https://restapi.amap.com/v3/direction/driving?` +
+                `key=218cfd67a9c19db9a4588d5b47d5e1df` +
+                `&origin=${fromLng},${fromLat}` +  // 起点坐标，格式为：经度,纬度
+                `&destination=${toLng},${toLat}` + // 终点坐标，格式为：经度,纬度
+                `&output=json` +
+                `&extensions=base`;
+
+            console.log('路线规划请求URL:', url);
+
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.status === '1' && result.route?.paths?.[0]?.steps) {
+                // 解析路线数据
+                const steps = result.route.paths[0].steps;
+                let allPoints = [];
+
+                // 解析每一步的坐标点
+                steps.forEach(step => {
+                    if (step.polyline) {
+                        const pointsArr = step.polyline.split(';');
+                        const points = pointsArr.map(point => {
+                            const [lng, lat] = point.split(',').map(Number);
+                            return {
+                                latitude: lat,
+                                longitude: lng
+                            };
+                        });
+                        allPoints = [...allPoints, ...points];
+                    }
+                });
+
+                return allPoints;
+            } else {
+                console.error('路线规划失败:', result);
+                // 如果失败，返回起点终点直线
+                return [
+                    { latitude: fromLat, longitude: fromLng },
+                    { latitude: toLat, longitude: toLng }
+                ];
+            }
+        } catch (error) {
+            console.error('获取路线规划异常:', error);
+            // 发生错误时，返回起点终点直线
+            return [
+                { latitude: fromLat, longitude: fromLng },
+                { latitude: toLat, longitude: toLng }
+            ];
+        }
+    };
+
+    // 修改更新地图标记和路线的函数
+    const updateMapMarkersAndRoute = async (waybillData, driverLocation) => {
+        if (!waybillData) return;
+        
+        const { from_lat, from_lng, to_lat, to_lng } = waybillData;
+        
+        // 确保坐标是数字类型且有效
+        const fromLat = parseFloat(from_lat) || 39.908822999999984;
+        const fromLng = parseFloat(from_lng) || 116.39747;
+        const toLat = parseFloat(to_lat) || fromLat;
+        const toLng = parseFloat(to_lng) || fromLng;
+        
+        console.log('起点坐标:', fromLat, fromLng);
+        console.log('终点坐标:', toLat, toLng);
+        
+        // 获取规划路线
+        const routePoints = await getRoutePlan(fromLat, fromLng, toLat, toLng);
+        
+        // 设置标记点
+        const newMarkers = [
+            {
+                id: 'start',
+                coordinate: {
+                    latitude: fromLat,
+                    longitude: fromLng
+                },
+                title: '提货地',
+                description: waybillData.from_code_text || '',
+                type: 'start'
+            },
+            {
+                id: 'end',
+                coordinate: {
+                    latitude: toLat,
+                    longitude: toLng
+                },
+                title: '目的地',
+                description: waybillData.to_code_text || '',
+                type: 'end'
+            }
+        ];
+        
+        // 如果有司机位置，添加司机标记
+        if (driverLocation?.latitude && driverLocation?.longitude) {
+            newMarkers.push({
+                id: 'driver',
+                coordinate: {
+                    latitude: driverLocation.latitude,
+                    longitude: driverLocation.longitude
+                },
+                title: '当前位置',
+                type: 'driver'
+            });
+        }
+        
+        setMarkers(newMarkers);
+        
+        // 设置路线坐标点
+        setRouteCoordinates(routePoints);
+        
+        // 调整地图视野以包含所有点
+        const points = routePoints || [];
+        if (points.length > 0) {
+            const lats = points.map(coord => coord.latitude);
+            const lngs = points.map(coord => coord.longitude);
+            
+            setRegion({
+                latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
+                longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+                latitudeDelta: Math.max((Math.max(...lats) - Math.min(...lats)) * 1.5, 0.0922),
+                longitudeDelta: Math.max((Math.max(...lngs) - Math.min(...lngs)) * 1.5, 0.0421),
+            });
+        }
+    };
+
     useEffect(() => {
         getWaybillInfo();
         getReportEventListCount();
@@ -276,10 +266,16 @@ export default function WaybillDetail({ route, navigation }) {
                 {/* 地图组件 */}
                 <View style={styles.mapContainer}>
                     <MapView
+                        ref={mapRef}
                         style={styles.map}
-                        initialRegion={region}
-                        provider={PROVIDER_DEFAULT}
+                        region={region}
+                        showsUserLocation={true}
+                        showsMyLocationButton={true}
+                        showsCompass={true}
+                        showsScale={true}
+                        onRegionChangeComplete={setRegion}
                     >
+                        {/* 标记点 */}
                         {markers.map(marker => (
                             <Marker
                                 key={marker.id}
@@ -305,12 +301,13 @@ export default function WaybillDetail({ route, navigation }) {
                                 </View>
                             </Marker>
                         ))}
-                        {polylineCoords.length >= 2 && (
+                        
+                        {/* 路线 */}
+                        {routeCoordinates.length > 0 && (
                             <Polyline
-                                coordinates={polylineCoords}
-                                strokeColor="#1892e5"
-                                strokeWidth={3}
-                                lineDashPattern={[1]}
+                                coordinates={routeCoordinates}
+                                strokeWidth={4}
+                                strokeColor="#0066FF"
                             />
                         )}
                     </MapView>
