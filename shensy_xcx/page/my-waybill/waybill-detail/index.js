@@ -71,15 +71,33 @@ export default function WaybillDetail({ route, navigation }) {
             if (!hasPermission) return;
             
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High
+                accuracy: Location.Accuracy.BestForNavigation,
+                distanceInterval: 10
             });
 
             if (!location?.coords) {
                 return null;
             }
 
-            setCurrentLocation(location.coords);
-            return location.coords;
+            const coords = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            };
+
+            setCurrentLocation(coords);
+            
+            // 更新司机位置标记
+            setMarkers(prev => {
+                const markersWithoutDriver = prev.filter(marker => marker.id !== 'driver');
+                return [...markersWithoutDriver, {
+                    id: 'driver',
+                    coordinate: coords,
+                    title: '当前位置',
+                    type: 'driver'
+                }];
+            });
+
+            return coords;
         } catch (error) {
             console.error('获取位置信息失败:', error);
             return null;
@@ -137,45 +155,8 @@ export default function WaybillDetail({ route, navigation }) {
                 setMarkers(initialMarkers);
                 setWaybillInfo(waybillData);
 
-                // 立即获取路线规划
-                const routePoints = await getRoutePlan(fromLat, fromLng, toLat, toLng);
-                if (routePoints && routePoints.length > 0) {
-                    setRouteCoordinates(routePoints);
-                    
-                    // 调整地图视野以包含整个路线
-                    const lats = routePoints.map(coord => coord.latitude);
-                    const lngs = routePoints.map(coord => coord.longitude);
-                    
-                    const newRegion = {
-                        latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
-                        longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
-                        latitudeDelta: Math.max((Math.max(...lats) - Math.min(...lats)) * 1.5, 0.0922),
-                        longitudeDelta: Math.max((Math.max(...lngs) - Math.min(...lngs)) * 1.5, 0.0421),
-                    };
-
-                    // 使用 mapRef 平滑过渡到新视野
-                    if (mapRef.current) {
-                        mapRef.current.animateToRegion(newRegion, 1000);
-                    }
-                }
-
-                // 最后获取当前位置
-                getCurrentLocation().then(driverLocation => {
-                    if (driverLocation) {
-                        setMarkers(prev => {
-                            const markersWithoutDriver = prev.filter(marker => marker.id !== 'driver');
-                            return [...markersWithoutDriver, {
-                                id: 'driver',
-                                coordinate: {
-                                    latitude: driverLocation.latitude,
-                                    longitude: driverLocation.longitude
-                                },
-                                title: '当前位置',
-                                type: 'driver'
-                            }];
-                        });
-                    }
-                });
+                // 获取当前位置并添加到标记中
+                getCurrentLocation();
             }
         } catch (error) {
             toast.show('获取运单详情失败');
@@ -258,24 +239,11 @@ export default function WaybillDetail({ route, navigation }) {
 
     // 添加一个新的函数来更新位置
     const startLocationUpdates = () => {
+        // 立即获取一次位置
+        getCurrentLocation();
+        
         // 每30秒更新一次位置
-        locationUpdateTimer.current = setInterval(async () => {
-            const driverLocation = await getCurrentLocation();
-            if (driverLocation) {
-                setMarkers(prev => {
-                    const markersWithoutDriver = prev.filter(marker => marker.id !== 'driver');
-                    return [...markersWithoutDriver, {
-                        id: 'driver',
-                        coordinate: {
-                            latitude: driverLocation.latitude,
-                            longitude: driverLocation.longitude
-                        },
-                        title: '当前位置',
-                        type: 'driver'
-                    }];
-                });
-            }
-        }, 30000); // 30秒更新一次
+        locationUpdateTimer.current = setInterval(getCurrentLocation, 30000);
     };
 
     useEffect(() => {
@@ -303,7 +271,6 @@ export default function WaybillDetail({ route, navigation }) {
                         style={styles.map}
                         initialRegion={region}
                         markers={markers}
-                        polyline={routeCoordinates}
                         showsUserLocation={true}
                         showsCompass={true}
                         showsScale={true}

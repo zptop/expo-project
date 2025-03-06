@@ -5,7 +5,6 @@ import { WebView } from 'react-native-webview';
 const AMapView = forwardRef(({ 
   style, 
   markers = [], 
-  polyline = [], 
   onMapReady,
   showsUserLocation = true,
   showsCompass = true,
@@ -28,22 +27,12 @@ const AMapView = forwardRef(({
         `;
         webViewRef.current.injectJavaScript(script);
       }
-    },
-    fitToCoordinates: (coordinates, options = {}) => {
-      if (webViewRef.current) {
-        const points = coordinates.map(coord => [coord.longitude, coord.latitude]);
-        const script = `
-          map.setFitView(null, false, [50, 50, 50, 50], ${options.animated ? 'true' : 'false'});
-        `;
-        webViewRef.current.injectJavaScript(script);
-      }
     }
   }));
 
   // 生成地图HTML
   const getMapHTML = () => {
     const markersStr = JSON.stringify(markers);
-    const polylineStr = JSON.stringify(polyline);
     const initialRegionStr = JSON.stringify(initialRegion);
 
     return `
@@ -58,12 +47,36 @@ const AMapView = forwardRef(({
             margin: 0;
             padding: 0;
           }
+          .amap-marker-label {
+            border: none;
+            background-color: transparent;
+          }
+          .driver-info {
+            padding: 5px 10px;
+            background-color: #1892e5;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            position: relative;
+          }
+          .driver-info::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: #1892e5 transparent transparent;
+          }
         </style>
-        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df"></script>
+        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df&plugin=AMap.Scale,AMap.ToolBar"></script>
       </head>
       <body>
         <div id="container"></div>
         <script>
+          // 创建地图实例
           var map = new AMap.Map('container', {
             zoom: 12,
             center: [${initialRegion.longitude}, ${initialRegion.latitude}],
@@ -74,49 +87,87 @@ const AMapView = forwardRef(({
           ${showsCompass ? 'map.addControl(new AMap.Scale());' : ''}
           ${showsScale ? 'map.addControl(new AMap.ToolBar());' : ''}
 
-          // 添加标记点
+          // 添加标记点和规划路线
           var markers = ${markersStr};
+          var startMarker, endMarker, driverMarker;
+          var startPoint, endPoint;
+          
           markers.forEach(function(markerData) {
-            var icon;
             if (markerData.type === 'start') {
-              icon = 'https://webapi.amap.com/theme/v1.3/markers/n/start.png';
-            } else if (markerData.type === 'end') {
-              icon = 'https://webapi.amap.com/theme/v1.3/markers/n/end.png';
-            } else if (markerData.type === 'driver') {
-              icon = 'https://webapi.amap.com/theme/v1.3/markers/n/loc.png';
-            }
-            
-            var marker = new AMap.Marker({
-              position: [markerData.coordinate.longitude, markerData.coordinate.latitude],
-              title: markerData.title,
-              icon: icon,
-              map: map
-            });
-
-            if (markerData.type === 'driver') {
-              var info = new AMap.InfoWindow({
-                content: '<div style="padding: 5px; border-radius: 3px; background-color: #1892e5; color: white;">我在这里</div>',
-                offset: new AMap.Pixel(0, -30)
+              startPoint = [markerData.coordinate.longitude, markerData.coordinate.latitude];
+              startMarker = new AMap.Marker({
+                position: startPoint,
+                title: markerData.title,
+                content: '<div style="background: url(https://webapi.amap.com/theme/v1.3/markers/n/start.png) no-repeat center; background-size: contain; width: 25px; height: 34px;"></div>',
+                offset: new AMap.Pixel(-12, -34),
+                map: map
               });
-              info.open(map, marker.getPosition());
+            } else if (markerData.type === 'end') {
+              endPoint = [markerData.coordinate.longitude, markerData.coordinate.latitude];
+              endMarker = new AMap.Marker({
+                position: endPoint,
+                title: markerData.title,
+                content: '<div style="background: url(https://webapi.amap.com/theme/v1.3/markers/n/end.png) no-repeat center; background-size: contain; width: 25px; height: 34px;"></div>',
+                offset: new AMap.Pixel(-12, -34),
+                map: map
+              });
+            } else if (markerData.type === 'driver') {
+              driverMarker = new AMap.Marker({
+                position: [markerData.coordinate.longitude, markerData.coordinate.latitude],
+                title: markerData.title,
+                offset: new AMap.Pixel(-12, -34),
+                label: {
+                  content: '<div class="driver-info">我在这里</div>',
+                  direction: 'top'
+                },
+                map: map
+              });
             }
           });
 
-          // 添加路线
-          if (${polylineStr}.length > 0) {
-            var path = ${polylineStr}.map(function(point) {
-              return [point.longitude, point.latitude];
-            });
-            var polyline = new AMap.Polyline({
-              path: path,
-              strokeColor: "#0066FF",
-              strokeWeight: 4,
-              strokeStyle: "solid"
-            });
-            polyline.setMap(map);
+          // 如果有起点和终点，规划路线
+          if (startPoint && endPoint) {
+            // 使用Web API获取路线数据
+            fetch('https://restapi.amap.com/v3/direction/driving?' + new URLSearchParams({
+              key: '218cfd67a9c19db9a4588d5b47d5e1df',
+              origin: startPoint.join(','),
+              destination: endPoint.join(','),
+              extensions: 'all',
+              strategy: 2, // 最快路线
+              output: 'json'
+            }))
+            .then(response => response.json())
+            .then(result => {
+              if (result.status === '1' && result.route && result.route.paths && result.route.paths.length > 0) {
+                const path = result.route.paths[0].steps.reduce((acc, step) => {
+                  const points = step.polyline.split(';').map(point => {
+                    const [lng, lat] = point.split(',').map(Number);
+                    return [lng, lat];
+                  });
+                  return acc.concat(points);
+                }, []);
 
-            // 自适应显示
-            map.setFitView();
+                // 绘制路线
+                new AMap.Polyline({
+                  path: path,
+                  strokeColor: "#1892e5",
+                  strokeWeight: 6,
+                  strokeStyle: "solid",
+                  lineJoin: 'round',
+                  lineCap: 'round',
+                  showDir: true,
+                  map: map
+                });
+
+                // 自适应显示
+                map.setFitView();
+              } else {
+                console.error('获取路线失败:', result);
+              }
+            })
+            .catch(error => {
+              console.error('请求路线失败:', error);
+            });
           }
 
           // 定位
