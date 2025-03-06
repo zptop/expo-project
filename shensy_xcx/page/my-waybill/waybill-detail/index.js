@@ -94,22 +94,24 @@ export default function WaybillDetail({ route, navigation }) {
             
             if (res.code === 0 && res.data) {
                 const waybillData = res.data;
-                setWaybillInfo(waybillData);
-
-                // 立即进行路线规划
-                const { from_lat, from_lng, to_lat, to_lng } = waybillData;
                 
                 // 确保坐标是数字类型且有效
-                const fromLat = parseFloat(from_lat) || 39.908822999999984;
-                const fromLng = parseFloat(from_lng) || 116.39747;
-                const toLat = parseFloat(to_lat) || fromLat;
-                const toLng = parseFloat(to_lng) || fromLng;
-                
-                // 获取规划路线
-                const routePoints = await getRoutePlan(fromLat, fromLng, toLat, toLng);
-                
-                // 设置标记点
-                const newMarkers = [
+                const fromLat = parseFloat(waybillData.from_lat) || 39.908822999999984;
+                const fromLng = parseFloat(waybillData.from_lng) || 116.39747;
+                const toLat = parseFloat(waybillData.to_lat) || fromLat;
+                const toLng = parseFloat(waybillData.to_lng) || fromLng;
+
+                // 先设置初始地图视野为起点和终点的中心
+                const initialRegion = {
+                    latitude: (fromLat + toLat) / 2,
+                    longitude: (fromLng + toLng) / 2,
+                    latitudeDelta: Math.abs(toLat - fromLat) * 1.5 || 0.0922,
+                    longitudeDelta: Math.abs(toLng - fromLng) * 1.5 || 0.0421,
+                };
+                setRegion(initialRegion);
+
+                // 设置起点和终点标记
+                const initialMarkers = [
                     {
                         id: 'start',
                         coordinate: {
@@ -131,32 +133,36 @@ export default function WaybillDetail({ route, navigation }) {
                         type: 'end'
                     }
                 ];
-                
-                // 设置路线和标记
-                setMarkers(newMarkers);
-                setRouteCoordinates(routePoints);
-                
-                // 调整地图视野
-                if (routePoints.length > 0) {
+                setMarkers(initialMarkers);
+                setWaybillInfo(waybillData);
+
+                // 立即获取路线规划
+                const routePoints = await getRoutePlan(fromLat, fromLng, toLat, toLng);
+                if (routePoints && routePoints.length > 0) {
+                    setRouteCoordinates(routePoints);
+                    
+                    // 调整地图视野以包含整个路线
                     const lats = routePoints.map(coord => coord.latitude);
                     const lngs = routePoints.map(coord => coord.longitude);
                     
-                    setRegion({
+                    const newRegion = {
                         latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
                         longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
                         latitudeDelta: Math.max((Math.max(...lats) - Math.min(...lats)) * 1.5, 0.0922),
                         longitudeDelta: Math.max((Math.max(...lngs) - Math.min(...lngs)) * 1.5, 0.0421),
-                    });
+                    };
+
+                    // 使用 mapRef 平滑过渡到新视野
+                    if (mapRef.current) {
+                        mapRef.current.animateToRegion(newRegion, 1000);
+                    }
                 }
 
-                // 获取当前位置
+                // 最后获取当前位置
                 getCurrentLocation().then(driverLocation => {
                     if (driverLocation) {
-                        // 使用 setMarkers 时，确保不会重复添加司机标记
                         setMarkers(prev => {
-                            // 先过滤掉可能存在的司机标记
                             const markersWithoutDriver = prev.filter(marker => marker.id !== 'driver');
-                            // 添加新的司机标记
                             return [...markersWithoutDriver, {
                                 id: 'driver',
                                 coordinate: {
@@ -192,27 +198,22 @@ export default function WaybillDetail({ route, navigation }) {
     };
 
     // 修改路线规划函数
-    const getRoutePlan = async (fromLat, fromLng, toLat, toLng) => {
+    const getRoutePlan = async (fromLat, fromLng, toLat, toLng, retryCount = 3) => {
         try {
-            // 使用高德地图 Web 服务 API 的驾车路线规划接口
             const url = `https://restapi.amap.com/v3/direction/driving?` +
                 `key=218cfd67a9c19db9a4588d5b47d5e1df` +
-                `&origin=${fromLng},${fromLat}` +  // 起点坐标，格式为：经度,纬度
-                `&destination=${toLng},${toLat}` + // 终点坐标，格式为：经度,纬度
+                `&origin=${fromLng},${fromLat}` +
+                `&destination=${toLng},${toLat}` +
                 `&output=json` +
                 `&extensions=base`;
-
-            console.log('路线规划请求URL:', url);
 
             const response = await fetch(url);
             const result = await response.json();
 
             if (result.status === '1' && result.route?.paths?.[0]?.steps) {
-                // 解析路线数据
                 const steps = result.route.paths[0].steps;
                 let allPoints = [];
 
-                // 解析每一步的坐标点
                 steps.forEach(step => {
                     if (step.polyline) {
                         const pointsArr = step.polyline.split(';');
@@ -229,16 +230,22 @@ export default function WaybillDetail({ route, navigation }) {
 
                 return allPoints;
             } else {
-                console.error('路线规划失败:', result);
-                // 如果失败，返回起点终点直线
+                // 如果还有重试次数，则重试
+                if (retryCount > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒后重试
+                    return getRoutePlan(fromLat, fromLng, toLat, toLng, retryCount - 1);
+                }
+                // 如果重试次数用完，返回直线路径
                 return [
                     { latitude: fromLat, longitude: fromLng },
                     { latitude: toLat, longitude: toLng }
                 ];
             }
         } catch (error) {
-            console.error('获取路线规划异常:', error);
-            // 发生错误时，返回起点终点直线
+            if (retryCount > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return getRoutePlan(fromLat, fromLng, toLat, toLng, retryCount - 1);
+            }
             return [
                 { latitude: fromLat, longitude: fromLng },
                 { latitude: toLat, longitude: toLng }
