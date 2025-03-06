@@ -23,6 +23,7 @@ export default function WaybillDetail({ route, navigation }) {
     const [polylineCoords, setPolylineCoords] = useState([]);
     const [routeCoordinates, setRouteCoordinates] = useState([]);
     const mapRef = useRef(null);
+    const locationUpdateTimer = useRef(null);
 
     // 检查位置权限
     const checkLocationPermission = async () => {
@@ -67,24 +68,19 @@ export default function WaybillDetail({ route, navigation }) {
         try {
             const hasPermission = await checkLocationPermission();
             if (!hasPermission) return;
-
-            toast.show('正在获取位置信息...', -1);
             
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High
             });
 
             if (!location?.coords) {
-                toast.show('无法获取准确的位置信息，请稍后重试');
-                return;
+                return null;
             }
 
-            toast.close();
             setCurrentLocation(location.coords);
             return location.coords;
         } catch (error) {
-            toast.close();
-            toast.show('获取位置信息失败，请检查GPS是否开启');
+            console.error('获取位置信息失败:', error);
             return null;
         }
     };
@@ -250,9 +246,39 @@ export default function WaybillDetail({ route, navigation }) {
         }
     };
 
+    // 添加一个新的函数来更新位置
+    const startLocationUpdates = () => {
+        // 每30秒更新一次位置
+        locationUpdateTimer.current = setInterval(async () => {
+            const driverLocation = await getCurrentLocation();
+            if (driverLocation) {
+                setMarkers(prev => {
+                    const markersWithoutDriver = prev.filter(marker => marker.id !== 'driver');
+                    return [...markersWithoutDriver, {
+                        id: 'driver',
+                        coordinate: {
+                            latitude: driverLocation.latitude,
+                            longitude: driverLocation.longitude
+                        },
+                        title: '当前位置',
+                        type: 'driver'
+                    }];
+                });
+            }
+        }, 30000); // 30秒更新一次
+    };
+
     useEffect(() => {
         getWaybillInfo();
         getReportEventListCount();
+        startLocationUpdates();
+
+        // 清理定时器
+        return () => {
+            if (locationUpdateTimer.current) {
+                clearInterval(locationUpdateTimer.current);
+            }
+        };
     }, []);
 
     if (!waybillInfo) return null;
@@ -280,6 +306,12 @@ export default function WaybillDetail({ route, navigation }) {
                                 description={marker.description}
                             >
                                 <View style={styles.markerContainer}>
+                                    {marker.type === 'driver' && (
+                                        <View style={styles.driverLocationTip}>
+                                            <Text style={styles.driverLocationTipText}>我在这里</Text>
+                                            <View style={styles.driverLocationTipArrow} />
+                                        </View>
+                                    )}
                                     <Image
                                         source={
                                             marker.type === 'start' ?
@@ -855,5 +887,40 @@ const styles = StyleSheet.create({
     },
     arrowIcon: {
         marginLeft: 5,
+    },
+    driverLocationTip: {
+        position: 'absolute',
+        backgroundColor: '#1892e5',
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        borderRadius: 12,
+        top: -36,
+        left: -30,
+        minWidth: 80,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        whiteSpace: 'nowrap',
+    },
+    driverLocationTipText: {
+        color: '#fff',
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    driverLocationTipArrow: {
+        position: 'absolute',
+        bottom: -6,
+        left: '50%',
+        marginLeft: -6,
+        width: 0,
+        height: 0,
+        backgroundColor: 'transparent',
+        borderStyle: 'solid',
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderTopWidth: 6,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: '#1892e5',
     },
 }); 
