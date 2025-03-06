@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Dimensions, Alert, SafeAreaView } from 'react-native';
-import MapView from 'react-native-maps';
-import { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Dimensions, Alert, SafeAreaView, Platform } from 'react-native';
+import AMapView from '../../../components/AMapView';
 import request from '../../../util/request';
 import toast from '../../../util/toast';
 import * as Location from 'expo-location';
@@ -299,57 +298,19 @@ export default function WaybillDetail({ route, navigation }) {
             <ScrollView style={styles.scrollContent}>
                 {/* 地图组件 */}
                 <View style={styles.mapContainer}>
-                    <MapView
+                    <AMapView
                         ref={mapRef}
                         style={styles.map}
                         initialRegion={region}
-                        region={region}
+                        markers={markers}
+                        polyline={routeCoordinates}
                         showsUserLocation={true}
-                        showsMyLocationButton={true}
                         showsCompass={true}
                         showsScale={true}
-                        provider={PROVIDER_DEFAULT}
-                    >
-                        {markers.map(marker => (
-                            <Marker
-                                key={marker.id}
-                                coordinate={marker.coordinate}
-                                title={marker.title}
-                                description={marker.description}
-                            >
-                                <View style={styles.markerContainer}>
-                                    {marker.type === 'driver' && (
-                                        <View style={styles.driverLocationTip}>
-                                            <Text style={styles.driverLocationTipText}>我在这里</Text>
-                                            <View style={styles.driverLocationTipArrow} />
-                                        </View>
-                                    )}
-                                    <Image
-                                        source={
-                                            marker.type === 'start' ?
-                                                require('../../../assets/shensy_driver_xcx_images/start-add.png') :
-                                                marker.type === 'end' ?
-                                                    require('../../../assets/shensy_driver_xcx_images/end-add.png') :
-                                                    require('../../../assets/shensy_driver_xcx_images/driver-location.png')
-                                        }
-                                        style={[
-                                            styles.markerImage,
-                                            marker.type === 'driver' && styles.driverMarker
-                                        ]}
-                                        resizeMode="contain"
-                                    />
-                                </View>
-                            </Marker>
-                        ))}
-                        
-                        {routeCoordinates.length > 0 && (
-                            <Polyline
-                                coordinates={routeCoordinates}
-                                strokeWidth={4}
-                                strokeColor="#0066FF"
-                            />
-                        )}
-                    </MapView>
+                        onMapReady={() => {
+                            console.log('地图加载完成');
+                        }}
+                    />
                 </View>
 
                 {/* 提货地 */}
