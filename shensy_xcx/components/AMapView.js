@@ -39,7 +39,9 @@ const AMapView = forwardRef(({
       <!DOCTYPE html>
       <html>
       <head>
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
         <style>
           html, body, #container {
             width: 100%;
@@ -70,8 +72,46 @@ const AMapView = forwardRef(({
             border-style: solid;
             border-color: #1892e5 transparent transparent;
           }
+          .marker-icon {
+            width: 25px;
+            height: 34px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .marker-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+          }
+          .start-icon::before {
+            background-image: url(https://a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png);
+          }
+          .end-icon::before {
+            background-image: url(https://a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-red.png);
+          }
+          .marker-text {
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+            margin-top: -10px;
+          }
         </style>
-        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df&plugin=AMap.Scale,AMap.ToolBar"></script>
+        <script type="text/javascript">
+          window._AMapSecurityConfig = {
+            securityJsCode: '7c0a7f4c5c1c5c1c5c1c5c1c5c1c5c1c'
+          }
+        </script>
+        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df&plugin=AMap.Scale,AMap.ToolBar,AMap.Driving"></script>
       </head>
       <body>
         <div id="container"></div>
@@ -80,7 +120,8 @@ const AMapView = forwardRef(({
           var map = new AMap.Map('container', {
             zoom: 12,
             center: [${initialRegion.longitude}, ${initialRegion.latitude}],
-            showIndoorMap: false
+            showIndoorMap: false,
+            resizeEnable: true
           });
 
           // 添加控件
@@ -98,7 +139,7 @@ const AMapView = forwardRef(({
               startMarker = new AMap.Marker({
                 position: startPoint,
                 title: markerData.title,
-                content: '<div style="background: url(https://webapi.amap.com/theme/v1.3/markers/n/start.png) no-repeat center; background-size: contain; width: 25px; height: 34px;"></div>',
+                content: '<div class="marker-icon start-icon"><span class="marker-text">起</span></div>',
                 offset: new AMap.Pixel(-12, -34),
                 map: map
               });
@@ -107,7 +148,7 @@ const AMapView = forwardRef(({
               endMarker = new AMap.Marker({
                 position: endPoint,
                 title: markerData.title,
-                content: '<div style="background: url(https://webapi.amap.com/theme/v1.3/markers/n/end.png) no-repeat center; background-size: contain; width: 25px; height: 34px;"></div>',
+                content: '<div class="marker-icon end-icon"><span class="marker-text">终</span></div>',
                 offset: new AMap.Pixel(-12, -34),
                 map: map
               });
@@ -128,46 +169,53 @@ const AMapView = forwardRef(({
           // 如果有起点和终点，规划路线
           if (startPoint && endPoint) {
             // 使用Web API获取路线数据
-            fetch('https://restapi.amap.com/v3/direction/driving?' + new URLSearchParams({
-              key: '218cfd67a9c19db9a4588d5b47d5e1df',
-              origin: startPoint.join(','),
-              destination: endPoint.join(','),
-              extensions: 'all',
-              strategy: 2, // 最快路线
-              output: 'json'
-            }))
-            .then(response => response.json())
-            .then(result => {
-              if (result.status === '1' && result.route && result.route.paths && result.route.paths.length > 0) {
-                const path = result.route.paths[0].steps.reduce((acc, step) => {
-                  const points = step.polyline.split(';').map(point => {
-                    const [lng, lat] = point.split(',').map(Number);
-                    return [lng, lat];
-                  });
-                  return acc.concat(points);
-                }, []);
+            var url = 'https://restapi.amap.com/v3/direction/driving?' + 
+              'key=218cfd67a9c19db9a4588d5b47d5e1df' +
+              '&origin=' + startPoint.join(',') +
+              '&destination=' + endPoint.join(',') +
+              '&extensions=all' +
+              '&strategy=2' + // 最快路线
+              '&output=json';
 
-                // 绘制路线
-                new AMap.Polyline({
-                  path: path,
-                  strokeColor: "#1892e5",
-                  strokeWeight: 6,
-                  strokeStyle: "solid",
-                  lineJoin: 'round',
-                  lineCap: 'round',
-                  showDir: true,
-                  map: map
-                });
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function() {
+              if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                  var result = JSON.parse(xhr.responseText);
+                  if (result.status === '1' && result.route && result.route.paths && result.route.paths.length > 0) {
+                    var path = [];
+                    result.route.paths[0].steps.forEach(function(step) {
+                      var points = step.polyline.split(';').map(function(point) {
+                        var [lng, lat] = point.split(',').map(Number);
+                        return [lng, lat];
+                      });
+                      path = path.concat(points);
+                    });
 
-                // 自适应显示
-                map.setFitView();
-              } else {
-                console.error('获取路线失败:', result);
+                    // 绘制路线
+                    var polyline = new AMap.Polyline({
+                      path: path,
+                      strokeColor: "#1892e5",
+                      strokeWeight: 6,
+                      strokeStyle: "solid",
+                      lineJoin: 'round',
+                      lineCap: 'round',
+                      showDir: true,
+                      map: map
+                    });
+
+                    // 自适应显示
+                    map.setFitView([startMarker, endMarker]);
+                  } else {
+                    console.error('获取路线失败:', result);
+                  }
+                } else {
+                  console.error('请求路线失败:', xhr.status);
+                }
               }
-            })
-            .catch(error => {
-              console.error('请求路线失败:', error);
-            });
+            };
+            xhr.send();
           }
 
           // 定位
@@ -214,6 +262,18 @@ const AMapView = forwardRef(({
         scalesPageToFit={true}
         scrollEnabled={false}
         bounces={false}
+        androidLayerType={Platform.select({
+          android: 'hardware',
+          default: undefined
+        })}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.warn('WebView error: ', nativeEvent);
+        }}
+        onHttpError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.warn('WebView HTTP error: ', nativeEvent);
+        }}
       />
     </View>
   );
