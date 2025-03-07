@@ -42,6 +42,7 @@ const AMapView = forwardRef(({
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
         <style>
           html, body, #container {
             width: 100%;
@@ -106,22 +107,24 @@ const AMapView = forwardRef(({
             margin-top: -10px;
           }
         </style>
-        <script type="text/javascript">
-          window._AMapSecurityConfig = {
-            securityJsCode: '7c0a7f4c5c1c5c1c5c1c5c1c5c1c5c1c'
-          }
-        </script>
-        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df&plugin=AMap.Scale,AMap.ToolBar,AMap.Driving"></script>
       </head>
       <body>
         <div id="container"></div>
+        <script>
+          window._AMapSecurityConfig = {
+            securityJsCode: '7c0a7f4c5c1c5c1c5c1c5c1c5c1c5c1c',
+            serviceHost: 'https://webapi.amap.com'
+          }
+        </script>
+        <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=218cfd67a9c19db9a4588d5b47d5e1df&plugin=AMap.Scale,AMap.ToolBar,AMap.Driving"></script>
         <script>
           // 创建地图实例
           var map = new AMap.Map('container', {
             zoom: 12,
             center: [${initialRegion.longitude}, ${initialRegion.latitude}],
             showIndoorMap: false,
-            resizeEnable: true
+            resizeEnable: true,
+            viewMode: '2D'
           });
 
           // 添加控件
@@ -262,10 +265,9 @@ const AMapView = forwardRef(({
         scalesPageToFit={true}
         scrollEnabled={false}
         bounces={false}
-        androidLayerType={Platform.select({
-          android: 'hardware',
-          default: undefined
-        })}
+        androidLayerType="hardware"
+        mixedContentMode="always"
+        originWhitelist={['*']}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
           console.warn('WebView error: ', nativeEvent);
