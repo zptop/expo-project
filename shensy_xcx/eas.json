@@ -1,7 +1,9 @@
 {
   "cli": {
     "version": ">= 5.9.1",
-    "appVersionSource": "local"
+    "appVersionSource": "local",
+    "requireCommit": false,
+    "promptToConfigurePushNotifications": false
   },
   "build": {
     "development": {
@@ -14,11 +16,19 @@
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "autoIncrement": true,
+      "env": {
+        "EXPO_NETWORK_TIMEOUT": "300000"
       }
     },
     "release": {
       "android": {
         "buildType": "apk"
+      },
+      "autoIncrement": true,
+      "env": {
+        "EXPO_NETWORK_TIMEOUT": "300000"
       }
     }
   },
